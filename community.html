@@ -221,11 +221,10 @@
       <p style="font-size:0.88rem;color:var(--color-text-muted);text-align:center;margin-bottom:24px;line-height:1.75;">
         コミュニティへの投稿・いいねは<br>プレミアムプランの機能です。
       </p>
-      <button class="btn btn-primary" onclick="startTrial()" style="font-size:1rem;">
-        ✨ 14日間無料で試す
+      <button class="btn btn-primary" id="upgrade-btn-modal" onclick="startUpgrade()" style="font-size:1rem;">
+        ✨ プレミアムにアップグレード（¥174/月）
       </button>
-      <a href="settings.html" class="btn btn-ghost mt-8" style="display:block;text-align:center;">プランの詳細を見る</a>
-      <button class="btn btn-ghost mt-8" onclick="document.getElementById('premium-modal').classList.remove('open')">
+      <button class="btn btn-ghost mt-8" onclick="document.getElementById('premium-modal').classList.remove('open')" style="width:100%;">
         キャンセル
       </button>
     </div>
@@ -343,16 +342,20 @@
       return false;
     }
 
-    function startTrial() {
-      const s = APP.getSettings();
-      s.premium = true;
-      s.premiumSince = new Date().toISOString();
-      APP.saveSettings(s);
-      document.getElementById('premium-modal').classList.remove('open');
-      // バナーを非表示
-      const banner = document.querySelector('.premium-banner');
-      if (banner) banner.style.display = 'none';
-      showToast('プレミアムプランが有効になりました！ 🎉');
+    async function startUpgrade() {
+      if (!APP.isLoggedIn()) {
+        location.href = 'login.html?next=community.html';
+        return;
+      }
+      const btn = document.getElementById('upgrade-btn-modal');
+      if (btn) { btn.disabled = true; btn.textContent = '処理中…'; }
+      try {
+        const data = await APP.apiRequest('/api/stripe/checkout', { method: 'POST' });
+        window.location.href = data.url;
+      } catch (e) {
+        alert('決済ページへの移動に失敗しました: ' + e.message);
+        if (btn) { btn.disabled = false; btn.textContent = '✨ プレミアムにアップグレード（¥174/月）'; }
+      }
     }
 
     function showToast(msg) {

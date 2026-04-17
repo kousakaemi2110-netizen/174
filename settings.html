@@ -316,26 +316,30 @@
       <!-- ③ 通知設定 -->
       <div class="settings-section">
         <div class="settings-section-title">通知設定</div>
+        <!-- プッシュ非対応の場合に表示 -->
+        <div id="push-unsupported" style="display:none;padding:12px 16px;background:var(--color-primary-light);border-radius:10px;font-size:0.82rem;color:var(--color-text-muted);margin-bottom:8px;">
+          このブラウザはバックグラウンド通知に対応していません。
+        </div>
         <div class="settings-list">
-          <div class="settings-row">
-            <span class="settings-row-icon">🌧</span>
-            <div style="flex:1">
-              <div class="settings-row-label">気圧アラート</div>
-              <div class="settings-row-sub">気圧が急降下する前に通知</div>
-            </div>
-            <label class="toggle-switch" aria-label="気圧アラートのON/OFF">
-              <input type="checkbox" id="toggle-pressure" onchange="saveToggle('pressure', this.checked)">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
           <div class="settings-row">
             <span class="settings-row-icon">📊</span>
             <div style="flex:1">
               <div class="settings-row-label">週次サマリー</div>
-              <div class="settings-row-sub">毎週月曜日に先週の記録をお知らせ</div>
+              <div class="settings-row-sub">毎週月曜朝に先週の記録をプッシュ通知</div>
             </div>
             <label class="toggle-switch" aria-label="週次サマリーのON/OFF">
               <input type="checkbox" id="toggle-weekly" onchange="saveToggle('weekly', this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-icon">🔔</span>
+            <div style="flex:1">
+              <div class="settings-row-label">毎日リマインダー</div>
+              <div class="settings-row-sub">記録未入力の日は夜21時にお知らせ</div>
+            </div>
+            <label class="toggle-switch" aria-label="毎日リマインダーのON/OFF">
+              <input type="checkbox" id="toggle-daily" onchange="saveToggle('notif_daily', this.checked)">
               <span class="toggle-slider"></span>
             </label>
           </div>
@@ -634,13 +638,19 @@
         const btn = document.getElementById('btn-delete-account');
         if (btn) btn.style.display = '';
       }
+      // Web Push 対応チェック
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        const el = document.getElementById('push-unsupported');
+        if (el) el.style.display = '';
+      }
+
       const s = APP.getSettings();
       if (s.nickname) document.getElementById('display-nickname').textContent = s.nickname;
       if (s.birthday) document.getElementById('display-birthday').textContent = s.birthday;
       if (s.cycle)    document.getElementById('display-cycle').textContent = s.cycle + '日';
-      if (s.pressure)   document.getElementById('toggle-pressure').checked = true;
-      if (s.weekly)     document.getElementById('toggle-weekly').checked = true;
-      if (s.cycleAlert) document.getElementById('toggle-cycle-alert').checked = true;
+      if (s.weekly)      document.getElementById('toggle-weekly').checked = true;
+      if (s.notif_daily) document.getElementById('toggle-daily').checked  = true;
+      if (s.cycleAlert)  document.getElementById('toggle-cycle-alert').checked = true;
 
       // プレミアムバッジを非表示
       if (s.premium) {
@@ -805,25 +815,118 @@
       document.getElementById('display-cycle').textContent = val + '日';
       closeModal('modal-cycle');
     }
+    /* ==============================
+       Web Push 購読管理
+       ============================== */
+
+    // base64url → Uint8Array（applicationServerKey用）
+    function urlB64ToUint8(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    }
+
+    // VAPID公開鍵をAPIから取得してキャッシュ
+    let _vapidPublicKey = null;
+    async function getVapidPublicKey() {
+      if (_vapidPublicKey) return _vapidPublicKey;
+      try {
+        const data = await APP.apiRequest('/api/push/vapid-key');
+        _vapidPublicKey = data.publicKey;
+        return _vapidPublicKey;
+      } catch { return null; }
+    }
+
+    // プッシュ通知を購読してサーバーに登録
+    async function subscribeToPush() {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+      const publicKey = await getVapidPublicKey();
+      if (!publicKey) { showNotifDeniedHint('サーバーの設定が完了していません'); return false; }
+
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly:      true,
+          applicationServerKey: urlB64ToUint8(publicKey),
+        });
+        const j = sub.toJSON();
+        await APP.apiRequest('/api/push/subscribe', {
+          method: 'POST',
+          body:   JSON.stringify({ endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth }),
+        });
+        return true;
+      } catch (e) {
+        console.error('Push subscribe error:', e);
+        if (e.name === 'NotAllowedError') showNotifDeniedHint();
+        return false;
+      }
+    }
+
+    // プッシュ通知を解除してサーバーから削除
+    async function unsubscribeFromPush() {
+      if (!('serviceWorker' in navigator)) return;
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await APP.apiRequest('/api/push/unsubscribe', {
+            method: 'POST',
+            body:   JSON.stringify({ endpoint: sub.endpoint }),
+          }).catch(() => {});
+          await sub.unsubscribe();
+        }
+      } catch (e) { console.error('Push unsubscribe error:', e); }
+    }
+
+    // 全通知がOFFならサブスクリプション解除
+    async function checkAndUnsubscribeIfAllOff() {
+      const s = APP.getSettings();
+      const notifKeys = ['weekly', 'notif_daily', 'cycleAlert'];
+      const anyOn = notifKeys.some(k => s[k]);
+      if (!anyOn) await unsubscribeFromPush();
+    }
+
     async function saveToggle(key, val) {
-      // 通知系トグルはONにする前にパーミッション確認
-      const notifyKeys = ['pressure', 'weekly', 'cycleAlert'];
+      const notifyKeys = ['weekly', 'notif_daily', 'cycleAlert'];
       if (val && notifyKeys.includes(key)) {
+        // 通知許可 → プッシュ購読
         const granted = await requestNotificationPermission();
         if (!granted) {
-          // 許可されなかったらトグルを戻す
-          const ids = { pressure: 'toggle-pressure', weekly: 'toggle-weekly', cycleAlert: 'toggle-cycle-alert' };
-          document.getElementById(ids[key]).checked = false;
+          const ids = { weekly: 'toggle-weekly', notif_daily: 'toggle-daily', cycleAlert: 'toggle-cycle-alert' };
+          const el = document.getElementById(ids[key]);
+          if (el) el.checked = false;
           showNotifDeniedHint();
           return;
         }
+        // Web Push 購読（未購読なら）
+        if (APP.getToken()) {
+          const reg = await navigator.serviceWorker.ready.catch(() => null);
+          const existing = reg ? await reg.pushManager.getSubscription() : null;
+          if (!existing) {
+            const ok = await subscribeToPush();
+            if (!ok) {
+              const ids = { weekly: 'toggle-weekly', notif_daily: 'toggle-daily', cycleAlert: 'toggle-cycle-alert' };
+              const el = document.getElementById(ids[key]);
+              if (el) el.checked = false;
+              return;
+            }
+          }
+        }
       }
+
       const s = APP.getSettings();
       s[key] = val;
       APP.saveSettings(s);
 
-      // 週次サマリーをONにしたら翌朝9時に予約
-      if (key === 'weekly' && val) scheduleWeeklySummary();
+      // 全通知OFFなら購読解除
+      if (!val && notifyKeys.includes(key)) {
+        await checkAndUnsubscribeIfAllOff();
+      }
+
+      // クラウドに設定を反映
+      if (APP.getToken()) {
+        APP.apiRequest('/api/settings', { method: 'PUT', body: JSON.stringify(s) }).catch(() => {});
+      }
     }
 
     async function requestNotificationPermission() {
@@ -833,28 +936,16 @@
       return result === 'granted';
     }
 
-    function showNotifDeniedHint() {
+    function showNotifDeniedHint(msg) {
       const hint = document.createElement('div');
       hint.style.cssText = `
         position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
         background:#2C2C2C; color:#fff; padding:12px 20px; border-radius:12px;
         font-size:0.85rem; z-index:999; text-align:center; max-width:320px;
       `;
-      hint.textContent = 'ブラウザの通知を許可してください（アドレスバー横の🔒アイコンから設定できます）';
+      hint.textContent = msg || 'ブラウザの通知を許可してください（アドレスバー横の🔒アイコンから設定できます）';
       document.body.appendChild(hint);
       setTimeout(() => hint.remove(), 4000);
-    }
-
-    function scheduleWeeklySummary() {
-      // 次の月曜9:00までのミリ秒を計算してlocalStorageに保存（Service Worker未使用のため簡易実装）
-      const now  = new Date();
-      const next = new Date(now);
-      next.setHours(9, 0, 0, 0);
-      const daysUntilMon = (1 - now.getDay() + 7) % 7 || 7;
-      next.setDate(next.getDate() + daysUntilMon);
-      const s = APP.getSettings();
-      s.weeklyNextAt = next.toISOString();
-      APP.saveSettings(s);
     }
 
     /* ---- データ操作 ---- */

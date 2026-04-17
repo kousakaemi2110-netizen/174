@@ -2,7 +2,7 @@
    174° Service Worker
    ============================== */
 
-const CACHE_NAME = '174-v2';
+const CACHE_NAME = '174-v3';
 const SHELL = [
   './index.html',
   './record.html',
@@ -10,7 +10,6 @@ const SHELL = [
   './analysis.html',
   './care.html',
   './column.html',
-  './community.html',
   './settings.html',
   './css/style.css',
   './js/app.js',
@@ -38,6 +37,41 @@ self.addEventListener('activate', e => {
     )
   );
   self.clients.claim();
+});
+
+/* ==============================
+   Web Push 通知
+   ============================== */
+
+/* プッシュ受信 → 通知を表示 */
+self.addEventListener('push', e => {
+  let data = { title: '174°', body: '新しいお知らせがあります', url: '/' };
+  try {
+    if (e.data) data = { ...data, ...e.data.json() };
+  } catch {}
+
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body:    data.body,
+      icon:    './images/icons/icon-192.png',
+      badge:   './images/icons/icon-192.png',
+      vibrate: [200, 100, 200],
+      data:    { url: data.url || '/' },
+    })
+  );
+});
+
+/* 通知タップ → アプリを開く */
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = e.notification.data?.url || '/';
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      const existing = list.find(c => c.url.includes('174') || c.url.includes('localhost'));
+      if (existing) return existing.focus().then(w => w.navigate(url));
+      return clients.openWindow(url);
+    })
+  );
 });
 
 /* フェッチ: HTML/JS/CSSはネットワーク優先（常に最新を取得）、画像のみキャッシュ優先 */

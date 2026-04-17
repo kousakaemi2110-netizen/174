@@ -735,18 +735,101 @@
         openAuthModal('login');
         return;
       }
-      const btn = document.getElementById('upgrade-btn');
-      if (btn) { btn.disabled = true; btn.textContent = '処理中…'; }
-      try {
-        const data = await APP.apiRequest('/api/stripe/checkout', { method: 'POST' });
-        window.location.href = data.url;
-      } catch (e) {
-        alert('決済ページへの移動に失敗しました: ' + e.message);
-        if (btn) {
-          btn.disabled = false;
-          btn.innerHTML = '<span class="plan-price">¥174/月</span> プレミアムにアップグレード';
+
+      // 課金前の確認モーダルを表示
+      showUpgradeConfirmModal();
+    }
+
+    function showUpgradeConfirmModal() {
+      // 既存があれば削除
+      const old = document.getElementById('_upgrade_confirm_modal');
+      if (old) old.remove();
+
+      const modal = document.createElement('div');
+      modal.id = '_upgrade_confirm_modal';
+      modal.style.cssText = `
+        position:fixed; inset:0; background:rgba(0,0,0,0.55);
+        display:flex; align-items:flex-end; justify-content:center;
+        z-index:9999; padding-bottom: env(safe-area-inset-bottom,0);
+      `;
+      modal.innerHTML = `
+        <div style="
+          background:var(--color-surface); width:100%; max-width:480px;
+          border-radius:20px 20px 0 0; padding:28px 24px 32px;
+        ">
+          <div style="text-align:center; font-size:1.8rem; margin-bottom:12px;">✨</div>
+          <div style="font-family:'Zen Kaku Gothic New',sans-serif; font-size:1.1rem; font-weight:700; text-align:center; margin-bottom:16px;">
+            プレミアムプランへアップグレード
+          </div>
+
+          <div style="background:var(--color-primary-light); border-radius:12px; padding:16px; margin-bottom:20px; font-size:0.875rem; line-height:1.8;">
+            <div style="display:flex; gap:8px; margin-bottom:6px;">
+              <span>📊</span><span>受診レポートのPDF出力</span>
+            </div>
+            <div style="display:flex; gap:8px; margin-bottom:6px;">
+              <span>📥</span><span>CSVエクスポート</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <span>🔔</span><span>プッシュ通知（週次サマリー・リマインダー）</span>
+            </div>
+          </div>
+
+          <div style="
+            background:#FFF8E8; border:1px solid #F0D080; border-radius:10px;
+            padding:12px 14px; margin-bottom:20px; font-size:0.8rem; line-height:1.7;
+            color:#7A5C00;
+          ">
+            <div style="font-weight:700; margin-bottom:4px;">⚠️ お支払いに関する注意事項</div>
+            <ul style="margin:0; padding-left:16px;">
+              <li>月額 <strong>¥174</strong> のサブスクリプションです</li>
+              <li>お支払い完了後、<strong>即座に</strong>プレミアム機能が有効になります</li>
+              <li>デジタルコンテンツの性質上、<strong>返金はできません</strong></li>
+              <li>解約はいつでも設定画面から可能です</li>
+            </ul>
+          </div>
+
+          <button id="_upgrade_proceed_btn" style="
+            width:100%; padding:16px; border-radius:12px; border:none;
+            background:var(--color-primary); color:#fff;
+            font-family:'Noto Sans JP',sans-serif; font-size:1rem; font-weight:700;
+            cursor:pointer; margin-bottom:10px;
+          ">
+            同意して決済ページへ進む
+          </button>
+          <button onclick="document.getElementById('_upgrade_confirm_modal').remove()" style="
+            width:100%; padding:13px; border-radius:12px; border:none;
+            background:var(--color-primary-light); color:var(--color-primary);
+            font-family:'Noto Sans JP',sans-serif; font-size:0.95rem;
+            cursor:pointer;
+          ">
+            キャンセル
+          </button>
+        </div>
+      `;
+
+      // 背景タップで閉じる
+      modal.addEventListener('click', e => {
+        if (e.target === modal) modal.remove();
+      });
+
+      // 「進む」ボタン
+      modal.querySelector('#_upgrade_proceed_btn').addEventListener('click', async () => {
+        modal.remove();
+        const btn = document.getElementById('upgrade-btn');
+        if (btn) { btn.disabled = true; btn.textContent = '処理中…'; }
+        try {
+          const data = await APP.apiRequest('/api/stripe/checkout', { method: 'POST' });
+          window.location.href = data.url;
+        } catch (e) {
+          alert('決済ページへの移動に失敗しました: ' + e.message);
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="plan-price">¥174/月</span> プレミアムにアップグレード';
+          }
         }
-      }
+      });
+
+      document.body.appendChild(modal);
     }
 
     async function cancelPremium() {

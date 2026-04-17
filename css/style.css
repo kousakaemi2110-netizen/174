@@ -515,6 +515,9 @@ h1, h2, h3 {
     background: linear-gradient(135deg, #2D2640 0%, #1E1A2E 100%);
   }
 }
+[data-theme="dark"] .ai-card {
+  background: linear-gradient(135deg, #2D2640 0%, #1E1A2E 100%);
+}
 
 /* ==============================
    ページタイトル

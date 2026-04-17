@@ -191,6 +191,49 @@
       margin: 20px 0 8px;
       color: var(--color-primary);
     }
+
+    /* 記事内アフィリエイト */
+    .article-affiliate {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--color-border);
+    }
+    .article-affiliate-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+    .article-product {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--color-bg);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 8px;
+    }
+    .article-product-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .article-product-info { flex: 1; }
+    .article-product-name { font-size: 0.88rem; font-weight: 700; margin-bottom: 2px; }
+    .article-product-desc { font-size: 0.75rem; color: var(--color-text-muted); line-height: 1.5; }
+    .article-product-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #FF9900;
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .article-product-btn:active { opacity: 0.8; }
   </style>
 </head>
 <body>
@@ -268,6 +311,25 @@
           <p>頭全体を締め付けられるような鈍い痛みが特徴です。肩こりや首のこりを伴うことが多く、光・音への過敏さはあまりありません。ストレスや長時間の同じ姿勢が原因になりやすいです。</p>
           <h3>見分けるポイント</h3>
           <p>「ズキズキ脈打つ」→片頭痛の可能性大。「締め付けられる感覚」→緊張型の可能性大。動いても変わらないなら緊張型、動くと悪化するなら片頭痛が疑われます。</p>
+          <div class="article-affiliate">
+            <div class="article-affiliate-title">🛒 この記事に関連するアイテム</div>
+            <div class="article-product">
+              <span class="article-product-icon">🧊</span>
+              <div class="article-product-info">
+                <div class="article-product-name">冷却ジェルシート（片頭痛に）</div>
+                <div class="article-product-desc">ズキズキする片頭痛にはこめかみや首の冷却が効果的</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=%E5%86%B7%E5%8D%B4%E3%82%B7%E3%83%BC%E3%83%88+%E9%A0%AD%E7%97%9B+%E3%81%93%E3%82%81%E3%81%8B%E3%81%BF&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+            <div class="article-product">
+              <span class="article-product-icon">🔥</span>
+              <div class="article-product-info">
+                <div class="article-product-name">温熱蒸気アイマスク（緊張型に）</div>
+                <div class="article-product-desc">締め付け感・眼精疲労には温めが効果的</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=%E6%B8%A9%E7%86%B1+%E8%92%B8%E6%B0%97+%E3%82%A2%E3%82%A4%E3%83%9E%E3%82%B9%E3%82%AF&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+          </div>
         `
       },
       {
@@ -285,6 +347,25 @@
           <p>人間の内耳には気圧を感知するセンサーがあります。気圧が急激に変化すると、このセンサーが過剰反応し、頭痛・めまい・吐き気を引き起こすことがあります。</p>
           <h3>対策</h3>
           <p>気圧変化を事前に把握して準備することが大切です。このアプリの気圧ウィジェットを活用し、急降下の前に早めに休息・水分補給・予防薬の服用を検討しましょう。</p>
+          <div class="article-affiliate">
+            <div class="article-affiliate-title">🛒 この記事に関連するアイテム</div>
+            <div class="article-product">
+              <span class="article-product-icon">💊</span>
+              <div class="article-product-info">
+                <div class="article-product-name">マグネシウムサプリメント</div>
+                <div class="article-product-desc">気圧頭痛の予防にマグネシウム補給が有効とされています</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=%E3%83%9E%E3%82%B0%E3%83%8D%E3%82%B7%E3%82%A6%E3%83%A0+%E3%82%B5%E3%83%97%E3%83%AA&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+            <div class="article-product">
+              <span class="article-product-icon">🧊</span>
+              <div class="article-product-info">
+                <div class="article-product-name">冷却ジェルシート</div>
+                <div class="article-product-desc">気圧低下で頭痛が来たらすぐ冷却。常備しておくと安心</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=%E5%86%B7%E5%8D%B4%E3%82%B7%E3%83%BC%E3%83%88+%E9%A0%AD%E7%97%9B&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+          </div>
         `
       },
       {
@@ -302,6 +383,25 @@
           <p>成人女性の推奨摂取量は1日約270mg。ナッツ類・豆腐・ほうれん草・バナナなどに豊富に含まれています。不足しがちな場合はサプリで補うのもひとつの選択肢です。</p>
           <h3>注意点</h3>
           <p>サプリメントを始める前に、持病や服薬中の薬との相互作用について医師に相談することをおすすめします。</p>
+          <div class="article-affiliate">
+            <div class="article-affiliate-title">🛒 この記事に関連するアイテム</div>
+            <div class="article-product">
+              <span class="article-product-icon">💊</span>
+              <div class="article-product-info">
+                <div class="article-product-name">マグネシウムサプリメント</div>
+                <div class="article-product-desc">片頭痛予防に。グリシン酸マグネシウムなど吸収率の高いタイプがおすすめ</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=%E3%83%9E%E3%82%B0%E3%83%8D%E3%82%B7%E3%82%A6%E3%83%A0+%E3%82%B5%E3%83%97%E3%83%AA+%E7%89%87%E9%A0%AD%E7%97%9B&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+            <div class="article-product">
+              <span class="article-product-icon">🥜</span>
+              <div class="article-product-info">
+                <div class="article-product-name">マグネシウム配合 栄養機能食品</div>
+                <div class="article-product-desc">食事からの補給が難しい方に。ビタミンB群との組み合わせが効果的</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=%E3%83%9E%E3%82%B0%E3%83%8D%E3%82%B7%E3%82%A6%E3%83%A0+%E3%83%93%E3%82%BF%E3%83%9F%E3%83%B3B+%E6%A0%84%E9%A4%8A%E6%A9%9F%E8%83%BD%E9%A3%9F%E5%93%81&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+          </div>
         `
       },
       {
@@ -319,6 +419,25 @@
           <p>薬を飲み続けると脳の痛みを感じる閾値が下がり、少しの刺激でも強く痛みを感じるようになります。そのため「薬が切れると頭痛がする」という悪循環に陥りがちです。</p>
           <h3>対策</h3>
           <p>月15回を超えたらアプリが警告を出します。気になる場合は頭痛専門医に相談しましょう。予防薬の処方で改善するケースが多くあります。</p>
+          <div class="article-affiliate">
+            <div class="article-affiliate-title">🛒 この記事に関連するアイテム</div>
+            <div class="article-product">
+              <span class="article-product-icon">🌿</span>
+              <div class="article-product-info">
+                <div class="article-product-name">アロマ・リラクゼーショングッズ</div>
+                <div class="article-product-desc">薬に頼らないリラックスケアを習慣に。ラベンダーなど鎮静作用のあるアロマがおすすめ</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=%E3%82%A2%E3%83%AD%E3%83%9E+%E3%83%AA%E3%83%A9%E3%82%AF%E3%82%BC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3+%E9%A0%AD%E7%97%9B&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+            <div class="article-product">
+              <span class="article-product-icon">💆</span>
+              <div class="article-product-info">
+                <div class="article-product-name">ネックマッサージャー</div>
+                <div class="article-product-desc">肩こりからくる頭痛のケアに。薬を使わず緊張をほぐして</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=%E3%83%8D%E3%83%83%E3%82%AF%E3%83%9E%E3%83%83%E3%82%B5%E3%83%BC%E3%82%B8%E3%83%A3%E3%83%BC+%E8%82%A9%E3%81%93%E3%82%8A&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+          </div>
         `
       },
       {
@@ -336,6 +455,25 @@
           <p>通常の片頭痛より痛みが強く、持続時間が長い傾向があります。また、鎮痛剤が効きにくいことも特徴のひとつです。</p>
           <h3>対処法</h3>
           <p>生理周期を記録してパターンを把握することが第一歩。このアプリの設定で生理周期を登録すると、頭痛との相関を確認できます。頭痛がひどい場合は婦人科や頭痛外来への相談もご検討ください。</p>
+          <div class="article-affiliate">
+            <div class="article-affiliate-title">🛒 この記事に関連するアイテム</div>
+            <div class="article-product">
+              <span class="article-product-icon">💊</span>
+              <div class="article-product-info">
+                <div class="article-product-name">マグネシウムサプリメント</div>
+                <div class="article-product-desc">月経前のマグネシウム補給が頭痛緩和に有効とされています</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=%E3%83%9E%E3%82%B0%E3%83%8D%E3%82%B7%E3%82%A6%E3%83%A0+%E3%82%B5%E3%83%97%E3%83%AA+%E5%A5%B3%E6%80%A7&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+            <div class="article-product">
+              <span class="article-product-icon">🌸</span>
+              <div class="article-product-info">
+                <div class="article-product-name">PMS対策サプリ（女性向け）</div>
+                <div class="article-product-desc">チェストベリーや当帰など、ホルモンバランスをサポートする成分配合</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=PMS+%E3%82%B5%E3%83%97%E3%83%AA+%E5%A5%B3%E6%80%A7+%E3%83%9B%E3%83%AB%E3%83%A2%E3%83%B3&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+          </div>
         `
       },
       {
@@ -357,6 +495,33 @@
           <p>筋肉の緊張が頭痛につながります。1時間に一度、首・肩を動かすだけで効果があります。</p>
           <h3>5. 頭痛日記をつける</h3>
           <p>記録することでパターンが見えてきます。このアプリを使って毎日記録する習慣をつけましょう！</p>
+          <div class="article-affiliate">
+            <div class="article-affiliate-title">🛒 この記事に関連するアイテム</div>
+            <div class="article-product">
+              <span class="article-product-icon">🚰</span>
+              <div class="article-product-info">
+                <div class="article-product-name">タンブラー・マイボトル</div>
+                <div class="article-product-desc">こまめな水分補給習慣に。保温・保冷できるボトルを常に手元に</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=%E3%82%BF%E3%83%B3%E3%83%96%E3%83%A9%E3%83%BC+%E3%83%9E%E3%82%A4%E3%83%9C%E3%83%88%E3%83%AB+%E4%BF%9D%E6%B8%A9&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+            <div class="article-product">
+              <span class="article-product-icon">💆</span>
+              <div class="article-product-info">
+                <div class="article-product-name">首・肩ストレッチグッズ</div>
+                <div class="article-product-desc">1時間に1回の習慣に。デスクに置けるコンパクトなストレッチポール</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=%E3%82%B9%E3%83%88%E3%83%AC%E3%83%83%E3%83%81%E3%83%9D%E3%83%BC%E3%83%AB+%E9%A6%96+%E8%82%A9&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+            <div class="article-product">
+              <span class="article-product-icon">🔥</span>
+              <div class="article-product-info">
+                <div class="article-product-name">温熱蒸気アイマスク</div>
+                <div class="article-product-desc">就寝前の眼精疲労ケアに。睡眠の質を上げて頭痛予防</div>
+              </div>
+              <a href="https://www.amazon.co.jp/s?k=%E6%B8%A9%E7%86%B1+%E3%82%A2%E3%82%A4%E3%83%9E%E3%82%B9%E3%82%AF+%E8%92%B8%E6%B0%97+%E7%9D%A1%E7%9C%A0&tag=kousakaemi211-22" class="article-product-btn" target="_blank" rel="noopener noreferrer">Amazonで見る ›</a>
+            </div>
+          </div>
         `
       }
     ];

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7C6FAF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="174°">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="images/icons/icon.svg">
+  <title>174° — 頭痛管理アプリ</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* グリーティングカード */
+    .greeting-card {
+      background: linear-gradient(135deg, var(--color-primary) 0%, #9B8BBF 100%);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      color: #fff;
+      margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .greeting-card::after {
+      content: '';
+      position: absolute;
+      right: -20px;
+      top: -20px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+    }
+    .greeting-card::before {
+      content: '';
+      position: absolute;
+      right: 30px;
+      bottom: -30px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+    }
+    .greeting-text {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+    }
+    .greeting-sub {
+      font-size: 0.9rem;
+      opacity: 0.85;
+      margin-bottom: 12px;
+    }
+    .greeting-date {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      font-family: 'DM Serif Display', serif;
+      letter-spacing: 0.04em;
+    }
+
+    /* 気圧ウィジェット */
+    .pressure-card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 12px;
+    }
+    .pressure-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .pressure-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.8rem;
+      color: var(--color-primary);
+      line-height: 1;
+    }
+    .pressure-unit {
+      font-size: 1rem;
+      color: var(--color-text-muted);
+      margin-left: 4px;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .pressure-label {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin-top: 2px;
+    }
+
+    /* ミニグラフ (SVG) */
+    .pressure-graph {
+      width: 100%;
+      height: 56px;
+      margin-top: 4px;
+    }
+
+    /* サマリーグリッド */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .summary-item {
+      background: var(--color-surface);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      box-shadow: var(--shadow-card);
+    }
+    .summary-icon {
+      font-size: 1.4rem;
+      margin-bottom: 6px;
+    }
+    .summary-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.8rem;
+      color: var(--color-primary);
+      line-height: 1;
+    }
+    .summary-desc {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin-top: 2px;
+    }
+
+    /* CTAボタン */
+    .cta-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: var(--color-primary);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      text-decoration: none;
+      box-shadow: 0 6px 20px rgba(124,111,175,0.4);
+      margin-bottom: 12px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cta-btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 8px rgba(124,111,175,0.25);
+    }
+    .cta-btn .cta-icon { font-size: 1.4rem; }
+
+    /* クイックリンク */
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .quick-link {
+      background: var(--color-surface);
+      border-radius: var(--radius-sm);
+      padding: 10px 4px;
+      text-align: center;
+      text-decoration: none;
+      color: var(--color-text);
+      box-shadow: var(--shadow-card);
+      transition: transform 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      font-size: 0.68rem;
+    }
+    .quick-link:active { transform: scale(0.94); }
+    .quick-link .ql-icon { font-size: 1.3rem; display: block; margin-bottom: 3px; }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header class="app-header">
+    <a href="index.html" class="logo">174°</a>
+    <div class="header-actions">
+      <button class="icon-btn" aria-label="通知">🔔</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <div class="container">
+
+      <!-- ① グリーティングカード -->
+      <div class="greeting-card mt-16">
+        <div class="greeting-text" id="greeting-text">こんにちは</div>
+        <div class="greeting-sub" id="greeting-sub">水分補給を忘れずに</div>
+        <div class="greeting-date" id="greeting-date"></div>
+      </div>
+
+      <!-- ② 気圧ウィジェット -->
+      <div class="pressure-card">
+        <div class="pressure-header">
+          <div>
+            <div class="pressure-label">現在の気圧</div>
+            <div>
+              <span class="pressure-value" id="pressure-value">1008</span>
+              <span class="pressure-unit">hPa</span>
+            </div>
+          </div>
+          <span class="badge badge-stable" id="pressure-badge">🔵 安定</span>
+        </div>
+        <!-- 24h 気圧グラフ -->
+        <svg class="pressure-graph" viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#7C6FAF" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#7C6FAF" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path id="pressure-area" fill="url(#grad)"/>
+          <path id="pressure-line" fill="none" stroke="#7C6FAF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--color-text-muted);margin-top:4px;">
+          <span>24時間前</span><span>12時間前</span><span>現在</span>
+        </div>
+      </div>
+
+      <!-- ③ 直近サマリー -->
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-icon">📋</div>
+          <div class="summary-num" id="month-count">—</div>
+          <div class="summary-desc">今月の頭痛回数</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon">🕐</div>
+          <div class="summary-num" id="last-record">—</div>
+          <div class="summary-desc">最終記録</div>
+        </div>
+      </div>
+
+      <!-- ④ CTA -->
+      <a href="record.html" class="cta-btn" aria-label="今日の頭痛を記録する">
+        <span class="cta-icon">✏️</span>
+        今日の頭痛を記録する
+      </a>
+
+      <!-- クイックリンク -->
+      <div class="quick-links">
+        <a href="calendar.html" class="quick-link">
+          <span class="ql-icon">📅</span>カレンダー
+        </a>
+        <a href="analysis.html" class="quick-link">
+          <span class="ql-icon">📊</span>分析
+        </a>
+        <a href="care.html" class="quick-link">
+          <span class="ql-icon">💆</span>ケア
+        </a>
+        <a href="column.html" class="quick-link">
+          <span class="ql-icon">📖</span>コラム
+        </a>
+        <a href="community.html" class="quick-link">
+          <span class="ql-icon">💬</span>掲示板
+        </a>
+      </div>
+
+      <!-- ⑤ AIアドバイスカード -->
+      <div class="ai-card">
+        <div class="ai-label">AI アドバイス</div>
+        <div class="ai-text" id="ai-advice">分析中…</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ボトムナビ -->
+  <nav class="bottom-nav" aria-label="メインナビゲーション">
+    <a href="index.html" class="nav-item active" aria-label="ホーム">
+      <span class="nav-icon">🏠</span><span>ホーム</span>
+    </a>
+    <a href="calendar.html" class="nav-item" aria-label="カレンダー">
+      <span class="nav-icon">📅</span><span>カレンダー</span>
+    </a>
+    <a href="record.html" class="nav-item nav-record" aria-label="記録する">
+      <span class="nav-icon">✏️</span><span>記録</span>
+    </a>
+    <a href="analysis.html" class="nav-item" aria-label="分析">
+      <span class="nav-icon">📊</span><span>分析</span>
+    </a>
+    <a href="settings.html" class="nav-item" aria-label="設定">
+      <span class="nav-icon">⚙️</span><span>設定</span>
+    </a>
+  </nav>
+
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      /* 挨拶 */
+      const g = APP.greeting();
+      document.getElementById('greeting-text').textContent = g.text;
+      document.getElementById('greeting-sub').textContent = g.sub;
+      const now = new Date();
+      const days = ['日','月','火','水','木','金','土'];
+      document.getElementById('greeting-date').textContent =
+        `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日（${days[now.getDay()]}）`;
+
+      /* サマリー */
+      const records = APP.getRecords();
+      const thisMonth = records.filter(r => {
+        const d = new Date(r.timestamp);
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      });
+      document.getElementById('month-count').textContent = thisMonth.length + '回';
+      if (records.length > 0) {
+        document.getElementById('last-record').textContent = APP.relativeTime(records[0].timestamp);
+      } else {
+        document.getElementById('last-record').textContent = 'なし';
+      }
+
+      /* AIアドバイス */
+      document.getElementById('ai-advice').textContent = APP.generateAdvice();
+
+      /* 気圧データ取得 */
+      loadPressure();
+    });
+
+    /* ---- 気圧: Open-Meteo API ---- */
+    async function loadPressure() {
+      const badge   = document.getElementById('pressure-badge');
+      const valueEl = document.getElementById('pressure-value');
+
+      // キャッシュ確認（1時間以内なら再取得しない）
+      const cache = JSON.parse(localStorage.getItem('174_pressure') || 'null');
+      if (cache && Date.now() - cache.ts < 3600000) {
+        renderPressure(cache.data);
+        return;
+      }
+
+      // 位置情報取得
+      if (!navigator.geolocation) { renderPressureFallback(); return; }
+      navigator.geolocation.getCurrentPosition(
+        async ({ coords }) => {
+          try {
+            const url = `https://api.open-meteo.com/v1/forecast`
+              + `?latitude=${coords.latitude.toFixed(4)}`
+              + `&longitude=${coords.longitude.toFixed(4)}`
+              + `&hourly=surface_pressure`
+              + `&timezone=auto&past_days=1&forecast_days=1`;
+            const res  = await fetch(url);
+            const json = await res.json();
+
+            // 直近25時間分を抽出
+            const now   = new Date();
+            const hours = json.hourly.time.map((t, i) => ({
+              t: new Date(t), v: json.hourly.surface_pressure[i]
+            }));
+            const past25 = hours
+              .filter(h => h.t <= now && h.t >= new Date(now - 25 * 3600000))
+              .map(h => h.v);
+
+            if (past25.length < 2) { renderPressureFallback(); return; }
+            localStorage.setItem('174_pressure', JSON.stringify({ ts: Date.now(), data: past25 }));
+            renderPressure(past25);
+          } catch {
+            renderPressureFallback();
+          }
+        },
+        () => renderPressureFallback(),
+        { timeout: 8000 }
+      );
+    }
+
+    function renderPressure(data) {
+      const badge   = document.getElementById('pressure-badge');
+      const valueEl = document.getElementById('pressure-value');
+      const latest  = data[data.length - 1];
+      const prev3h  = data[Math.max(0, data.length - 4)];
+      const diff    = latest - prev3h;
+
+      valueEl.textContent = Math.round(latest);
+
+      // 日次スナップショットを保存（分析チャート用に蓄積）
+      const todayKey = new Date().toISOString().slice(0, 10);
+      localStorage.setItem('174_p_' + todayKey, Math.round(latest));
+
+      if (diff < -3) {
+        badge.className = 'badge badge-danger';
+        badge.textContent = '🔴 急降下注意';
+      } else if (diff < -1) {
+        badge.className = 'badge badge-warning';
+        badge.textContent = '🟡 やや低下中';
+      } else {
+        badge.className = 'badge badge-stable';
+        badge.textContent = '🔵 安定';
+      }
+      drawPressureGraph(data);
+
+      // 気圧低下アラートがONなら通知
+      const s = APP.getSettings();
+      if (s.pressure && diff < -3 && Notification.permission === 'granted') {
+        new Notification('174° 気圧アラート', {
+          body: `気圧が急降下しています（${Math.round(latest)} hPa）。早めに休息をとりましょう。`,
+          icon: 'images/icons/icon-192.png'
+        });
+      }
+    }
+
+    function renderPressureFallback() {
+      // 位置情報拒否・オフライン時はフォールバック
+      document.getElementById('pressure-value').textContent = '—';
+      document.getElementById('pressure-badge').className = 'badge badge-stable';
+      document.getElementById('pressure-badge').textContent = '📍 位置情報が必要です';
+      const mock = Array.from({length: 25}, (_, i) =>
+        1010 + Math.sin(i * 0.4) * 3 + (Math.random() - 0.5)
+      );
+      drawPressureGraph(mock);
+    }
+
+    function drawPressureGraph(data) {
+      const W = 300, H = 56, pad = 4;
+      const min = Math.min(...data) - 1;
+      const max = Math.max(...data) + 1;
+      const pts = data.map((v, i) => {
+        const x = (i / (data.length - 1)) * W;
+        const y = H - pad - ((v - min) / (max - min)) * (H - pad * 2);
+        return `${x},${y}`;
+      });
+      const line = 'M' + pts.join(' L');
+      const area = line + ` L${W},${H} L0,${H} Z`;
+      document.getElementById('pressure-line').setAttribute('d', line);
+      document.getElementById('pressure-area').setAttribute('d', area);
+    }
+  </script>
+</body>
+</html>

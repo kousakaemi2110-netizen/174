@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7C6FAF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="images/icons/icon.svg">
+  <title>コミュニティ — 174°</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* プレミアムバナー */
+    .premium-banner {
+      background: linear-gradient(135deg, var(--color-primary-light) 0%, #FAF8FF 100%);
+      border: 1.5px solid var(--color-primary);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin: 12px 16px 4px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--color-text);
+      transition: transform 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .premium-banner:active { transform: scale(0.98); }
+    .premium-banner-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .premium-banner-text { flex: 1; }
+    .premium-banner-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--color-primary-dark);
+      margin-bottom: 2px;
+    }
+    .premium-banner-sub {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+    .premium-banner-price {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1rem;
+      color: var(--color-primary);
+      font-weight: 400;
+      flex-shrink: 0;
+    }
+
+    /* 投稿一覧 */
+    .posts-list {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 130px;
+    }
+
+    .post-card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow-card);
+    }
+    .post-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .post-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--color-primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .post-meta { flex: 1; }
+    .post-name { font-size: 0.875rem; font-weight: 700; }
+    .post-time { font-size: 0.72rem; color: var(--color-text-muted); margin-top: 1px; }
+    .post-body {
+      font-size: 0.92rem;
+      line-height: 1.7;
+      color: var(--color-text);
+      margin-bottom: 12px;
+    }
+    .post-footer {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .like-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      color: var(--color-text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 100px;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .like-btn:active { transform: scale(0.92); }
+    .like-btn.liked {
+      color: #E8698A;
+      background: #FEE8EF;
+    }
+    .like-btn .like-icon { font-size: 1rem; transition: transform 0.2s; }
+    .like-btn.liked .like-icon { transform: scale(1.3); }
+    .tag-chip {
+      font-size: 0.7rem;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: var(--color-primary-light);
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+
+    /* 投稿フォーム（下部固定） */
+    .post-form {
+      position: fixed;
+      bottom: var(--nav-height);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: var(--color-surface);
+      border-top: 1px solid var(--color-border);
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0));
+      z-index: 150;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
+    }
+    .post-input-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .post-textarea {
+      flex: 1;
+      border: 1.5px solid var(--color-border);
+      border-radius: 20px;
+      padding: 10px 16px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.92rem;
+      resize: none;
+      outline: none;
+      background: var(--color-bg);
+      color: var(--color-text);
+      max-height: 100px;
+      line-height: 1.5;
+      transition: border-color 0.15s;
+    }
+    .post-textarea:focus { border-color: var(--color-primary); }
+    .post-send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.12s, background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .post-send-btn:active { transform: scale(0.9); }
+    .post-send-btn:disabled { background: var(--color-border); cursor: default; }
+
+    /* 新着アニメーション */
+    @keyframes slideInTop {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .post-card.new { animation: slideInTop 0.3s ease; }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <a href="index.html" class="logo">174°</a>
+    <div class="header-actions">
+      <button class="icon-btn" aria-label="通知">🔔</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <div class="page-title-bar">
+      <h1>コミュニティ</h1>
+      <div class="subtitle">同じ悩みを持つ仲間とつながろう</div>
+    </div>
+
+    <!-- プレミアムバナー -->
+    <a href="settings.html" class="premium-banner" aria-label="プレミアムプランの詳細を見る">
+      <span class="premium-banner-icon">👑</span>
+      <div class="premium-banner-text">
+        <div class="premium-banner-title">コミュニティはプレミアムプランで参加できます</div>
+        <div class="premium-banner-sub">投稿・返信・いいねが解放されます</div>
+      </div>
+      <span class="premium-banner-price">¥174/月</span>
+    </a>
+
+    <!-- 投稿一覧 -->
+    <div class="posts-list" id="posts-list" aria-live="polite"></div>
+  </div>
+
+  <!-- プレミアムアップグレードモーダル -->
+  <div class="modal-overlay" id="premium-modal" role="dialog" aria-modal="true" aria-label="プレミアムプラン">
+    <div class="modal-sheet" style="padding:28px 20px 40px;">
+      <div style="text-align:center;font-size:2.2rem;margin-bottom:12px;">👑</div>
+      <div class="modal-title">プレミアムプランが必要です</div>
+      <p style="font-size:0.88rem;color:var(--color-text-muted);text-align:center;margin-bottom:24px;line-height:1.75;">
+        コミュニティへの投稿・いいねは<br>プレミアムプランの機能です。
+      </p>
+      <button class="btn btn-primary" onclick="startTrial()" style="font-size:1rem;">
+        ✨ 14日間無料で試す
+      </button>
+      <a href="settings.html" class="btn btn-ghost mt-8" style="display:block;text-align:center;">プランの詳細を見る</a>
+      <button class="btn btn-ghost mt-8" onclick="document.getElementById('premium-modal').classList.remove('open')">
+        キャンセル
+      </button>
+    </div>
+  </div>
+
+  <!-- 投稿フォーム -->
+  <div class="post-form" role="form" aria-label="新しい投稿">
+    <div class="post-input-row">
+      <textarea
+        class="post-textarea"
+        id="post-input"
+        placeholder="今日の体調や気づきをシェアしましょう"
+        rows="1"
+        maxlength="200"
+        aria-label="投稿内容"
+      ></textarea>
+      <button class="post-send-btn" id="send-btn" onclick="submitPost()" aria-label="投稿する" disabled>
+        ➤
+      </button>
+    </div>
+  </div>
+
+  <!-- ボトムナビ -->
+  <nav class="bottom-nav" aria-label="メインナビゲーション">
+    <a href="index.html" class="nav-item" aria-label="ホーム">
+      <span class="nav-icon">🏠</span><span>ホーム</span>
+    </a>
+    <a href="calendar.html" class="nav-item" aria-label="カレンダー">
+      <span class="nav-icon">📅</span><span>カレンダー</span>
+    </a>
+    <a href="record.html" class="nav-item nav-record" aria-label="記録する">
+      <span class="nav-icon">✏️</span><span>記録</span>
+    </a>
+    <a href="analysis.html" class="nav-item" aria-label="分析">
+      <span class="nav-icon">📊</span><span>分析</span>
+    </a>
+    <a href="settings.html" class="nav-item" aria-label="設定">
+      <span class="nav-icon">⚙️</span><span>設定</span>
+    </a>
+  </nav>
+
+  <script src="js/app.js"></script>
+  <script>
+    const MOCK_POSTS = [
+      {
+        id: 1, avatar: '🌸', name: 'はるか', time: '2時間前',
+        body: '今日は気圧が低くてつらいです…みなさんは大丈夫ですか？無理せず過ごしましょうね。',
+        likes: 12, liked: false, tag: '気圧頭痛'
+      },
+      {
+        id: 2, avatar: '🍀', name: 'みお', time: '5時間前',
+        body: 'マグネシウムのサプリ飲み始めて1ヶ月、頭痛の回数が減った気がします！もう少し続けてみます。',
+        likes: 28, liked: false, tag: '予防'
+      },
+      {
+        id: 3, avatar: '🌙', name: 'ゆき', time: '昨日',
+        body: '冷えピタを眉間に貼ると少し楽になります。100均のでも十分効きますよ😌',
+        likes: 19, liked: false, tag: 'ケア'
+      },
+      {
+        id: 4, avatar: '🌷', name: 'あおい', time: '2日前',
+        body: '生理前の頭痛がひどくて…婦人科に相談したらピルを勧められました。同じ経験した方いますか？',
+        likes: 34, liked: false, tag: 'ホルモン'
+      },
+      {
+        id: 5, avatar: '🦋', name: 'ことは', time: '3日前',
+        body: 'このアプリで記録を続けたら「寝不足の翌日」が一番頭痛が多いってわかりました！早寝を心がけます💤',
+        likes: 41, liked: false, tag: '記録'
+      }
+    ];
+
+    let posts = [...MOCK_POSTS];
+
+    function renderPosts() {
+      const list = document.getElementById('posts-list');
+      list.innerHTML = '';
+      posts.forEach(post => {
+        const card = createPostCard(post, false);
+        list.appendChild(card);
+      });
+    }
+
+    function createPostCard(post, isNew) {
+      const card = document.createElement('div');
+      card.className = 'post-card' + (isNew ? ' new' : '');
+      card.dataset.id = post.id;
+      card.innerHTML = `
+        <div class="post-header">
+          <div class="post-avatar" aria-hidden="true">${post.avatar}</div>
+          <div class="post-meta">
+            <div class="post-name">${escHtml(post.name)}</div>
+            <div class="post-time">${escHtml(post.time)}</div>
+          </div>
+          ${post.tag ? `<span class="tag-chip">${escHtml(post.tag)}</span>` : ''}
+        </div>
+        <div class="post-body">${escHtml(post.body)}</div>
+        <div class="post-footer">
+          <button
+            class="like-btn${post.liked ? ' liked' : ''}"
+            onclick="toggleLike(${post.id}, this)"
+            aria-label="${post.liked ? 'いいねを取り消す' : 'いいねする'}"
+            aria-pressed="${post.liked}"
+          >
+            <span class="like-icon">${post.liked ? '❤️' : '🤍'}</span>
+            <span class="like-count">${post.likes}</span>
+          </button>
+        </div>
+      `;
+      return card;
+    }
+
+    function checkPremium() {
+      if (APP.getSettings().premium) return true;
+      document.getElementById('premium-modal').classList.add('open');
+      return false;
+    }
+
+    function startTrial() {
+      const s = APP.getSettings();
+      s.premium = true;
+      s.premiumSince = new Date().toISOString();
+      APP.saveSettings(s);
+      document.getElementById('premium-modal').classList.remove('open');
+      // バナーを非表示
+      const banner = document.querySelector('.premium-banner');
+      if (banner) banner.style.display = 'none';
+      showToast('プレミアムプランが有効になりました！ 🎉');
+    }
+
+    function showToast(msg) {
+      const t = document.createElement('div');
+      t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#2C2C2C;color:#fff;padding:12px 20px;border-radius:12px;font-size:0.85rem;z-index:999;text-align:center;max-width:320px;white-space:nowrap;';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
+
+    function toggleLike(id, btn) {
+      if (!checkPremium()) return;
+      const post = posts.find(p => p.id === id);
+      if (!post) return;
+      post.liked = !post.liked;
+      post.likes += post.liked ? 1 : -1;
+      btn.classList.toggle('liked', post.liked);
+      btn.setAttribute('aria-pressed', post.liked);
+      btn.setAttribute('aria-label', post.liked ? 'いいねを取り消す' : 'いいねする');
+      btn.querySelector('.like-icon').textContent = post.liked ? '❤️' : '🤍';
+      btn.querySelector('.like-count').textContent = post.likes;
+    }
+
+    /* テキストエリア自動リサイズ & 送信ボタン制御 */
+    const textarea = document.getElementById('post-input');
+    const sendBtn  = document.getElementById('send-btn');
+    textarea.addEventListener('input', () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+      sendBtn.disabled = textarea.value.trim().length === 0;
+    });
+
+    function submitPost() {
+      if (!checkPremium()) return;
+      const body = textarea.value.trim();
+      if (!body) return;
+      const newPost = {
+        id: Date.now(),
+        avatar: '✨',
+        name: APP.getSettings().nickname || 'あなた',
+        time: 'たった今',
+        body,
+        likes: 0,
+        liked: false,
+        tag: ''
+      };
+      posts.unshift(newPost);
+      const list = document.getElementById('posts-list');
+      const card = createPostCard(newPost, true);
+      list.insertBefore(card, list.firstChild);
+      textarea.value = '';
+      textarea.style.height = 'auto';
+      sendBtn.disabled = true;
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderPosts();
+      // プレミアム済みならバナー非表示
+      if (APP.getSettings().premium) {
+        const banner = document.querySelector('.premium-banner');
+        if (banner) banner.style.display = 'none';
+      }
+      // モーダルの外タップで閉じる
+      document.getElementById('premium-modal').addEventListener('click', e => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7C6FAF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="images/icons/icon.svg">
+  <title>記録する — 174°</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ==============================
+       記録画面専用スタイル
+       ============================== */
+
+    /* ステッパー */
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 16px 20px 8px;
+    }
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-border);
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+    .step-dot.active {
+      background: var(--color-primary);
+      transform: scale(1.3);
+    }
+    .step-dot.done {
+      background: var(--color-primary);
+      opacity: 0.4;
+    }
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background: var(--color-border);
+      transition: background 0.3s;
+    }
+    .step-line.done {
+      background: var(--color-primary);
+      opacity: 0.4;
+    }
+
+    /* ステップ画面 */
+    .step-screen {
+      display: none;
+      padding: 0 20px 24px;
+      animation: slideIn 0.25s ease;
+    }
+    .step-screen.active {
+      display: block;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(24px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .step-question {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin: 20px 0 6px;
+      line-height: 1.4;
+    }
+    .step-hint {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* Step1: 強度ボタン */
+    .intensity-display {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .intensity-number {
+      font-family: 'DM Serif Display', serif;
+      font-size: 5rem;
+      line-height: 1;
+      color: var(--color-primary);
+      transition: color 0.2s, transform 0.2s;
+      display: block;
+      min-height: 80px;
+    }
+    .intensity-label {
+      font-size: 1rem;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+    }
+
+    .intensity-buttons {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .intensity-btn {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      font-family: 'DM Serif Display', serif;
+    }
+    .intensity-btn:active {
+      transform: scale(0.88);
+    }
+    .intensity-btn.selected {
+      box-shadow: 0 0 0 3px var(--color-primary), 0 4px 12px rgba(0,0,0,0.15);
+      transform: scale(1.12);
+    }
+    .intensity-scale-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--color-text-muted);
+      padding: 0 2px;
+    }
+
+    /* Step2: 頭部図 */
+    .head-diagram {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .head-svg-wrap {
+      position: relative;
+      width: 180px;
+      height: 200px;
+    }
+    .head-svg-wrap svg {
+      width: 100%;
+      height: 100%;
+    }
+    .location-zones {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+    }
+    .location-btn {
+      padding: 14px 8px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text);
+      font-size: 0.95rem;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      min-height: 52px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .location-btn:active { transform: scale(0.96); }
+    .location-btn.selected {
+      background: var(--color-primary-light);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+    .location-btn.full-width {
+      grid-column: 1 / -1;
+    }
+
+    /* Step5: 薬 */
+    .med-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .med-btn {
+      padding: 18px 20px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text);
+      font-size: 1rem;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 60px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .med-btn:active { transform: scale(0.98); }
+    .med-btn.selected {
+      background: var(--color-primary-light);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+    .med-btn .med-icon { font-size: 1.4rem; }
+    .med-detail {
+      display: none;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .med-detail.visible {
+      display: flex;
+    }
+    .med-detail .form-input {
+      flex: 1;
+    }
+    .count-select {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .count-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1.5px solid var(--color-border);
+      background: var(--color-surface);
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-primary);
+      transition: all 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .count-btn:active { transform: scale(0.9); background: var(--color-primary-light); }
+    .count-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--color-text);
+      min-width: 28px;
+      text-align: center;
+      font-family: 'DM Serif Display', serif;
+    }
+
+    /* ナビボタン */
+    .step-nav {
+      display: flex;
+      gap: 10px;
+      padding: 0 20px 16px;
+    }
+    .btn-back {
+      flex: 0 0 auto;
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-back:active { transform: scale(0.94); }
+
+    /* 任意ラベル */
+    .optional-label {
+      display: inline-block;
+      font-size: 0.7rem;
+      background: var(--color-border);
+      color: var(--color-text-muted);
+      padding: 2px 8px;
+      border-radius: 100px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    /* 完了画面 */
+    #step-complete {
+      text-align: center;
+      padding: 40px 20px 80px;
+    }
+    .complete-circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 2.5rem;
+      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 8px 24px rgba(124,111,175,0.4);
+    }
+    @keyframes popIn {
+      0%   { transform: scale(0); opacity: 0; }
+      80%  { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .complete-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 8px;
+    }
+    .complete-sub {
+      font-size: 0.95rem;
+      color: var(--color-text-muted);
+      margin-bottom: 32px;
+      line-height: 1.7;
+    }
+    .complete-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header class="app-header">
+    <a href="index.html" class="logo">174°</a>
+    <div class="header-actions">
+      <button class="icon-btn" aria-label="通知">🔔</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <!-- ステッパー -->
+    <div class="stepper" id="stepper" aria-hidden="true">
+      <div class="step-dot active" id="dot-1"></div>
+      <div class="step-line" id="line-1"></div>
+      <div class="step-dot" id="dot-2"></div>
+      <div class="step-line" id="line-2"></div>
+      <div class="step-dot" id="dot-3"></div>
+      <div class="step-line" id="line-3"></div>
+      <div class="step-dot" id="dot-4"></div>
+      <div class="step-line" id="line-4"></div>
+      <div class="step-dot" id="dot-5"></div>
+    </div>
+
+    <!-- Step 1: 強度 -->
+    <div class="step-screen active" id="step-1">
+      <div class="step-question">今、どのくらい痛いですか？</div>
+      <div class="step-hint">0（痛みなし）〜 10（激痛）で選んでください</div>
+
+      <div class="intensity-display">
+        <span class="intensity-number" id="intensity-number">—</span>
+        <div class="intensity-label" id="intensity-label">数字をタップしてください</div>
+      </div>
+
+      <div class="intensity-buttons" role="group" aria-label="痛みの強度">
+        <!-- JS で生成 -->
+      </div>
+      <div class="intensity-scale-labels">
+        <span>痛みなし</span>
+        <span>激痛</span>
+      </div>
+    </div>
+
+    <!-- Step 2: 場所 -->
+    <div class="step-screen" id="step-2">
+      <div class="step-question">どこが痛いですか？</div>
+      <div class="step-hint">複数選択できます</div>
+
+      <div class="head-diagram">
+        <!-- 頭部簡易SVG -->
+        <div class="head-svg-wrap" aria-hidden="true">
+          <svg viewBox="0 0 180 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 頭部輪郭 -->
+            <ellipse cx="90" cy="85" rx="62" ry="70" fill="#EDE9F8" stroke="#7C6FAF" stroke-width="2"/>
+            <!-- 首 -->
+            <rect x="72" y="148" width="36" height="36" rx="8" fill="#EDE9F8" stroke="#7C6FAF" stroke-width="2"/>
+            <!-- 目 -->
+            <ellipse cx="70" cy="85" rx="10" ry="8" fill="white" stroke="#7C6FAF" stroke-width="1.5"/>
+            <ellipse cx="110" cy="85" rx="10" ry="8" fill="white" stroke="#7C6FAF" stroke-width="1.5"/>
+            <circle cx="70" cy="85" r="4" fill="#7C6FAF"/>
+            <circle cx="110" cy="85" r="4" fill="#7C6FAF"/>
+            <!-- 鼻 -->
+            <path d="M88 95 Q90 105 92 95" stroke="#7C6FAF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <!-- 口 -->
+            <path d="M78 118 Q90 127 102 118" stroke="#7C6FAF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <!-- 眉 -->
+            <path d="M62 74 Q70 70 78 74" stroke="#7C6FAF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M102 74 Q110 70 118 74" stroke="#7C6FAF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="location-zones" role="group" aria-label="痛みの場所">
+        <button class="location-btn" data-loc="右側" onclick="toggleLocation(this)">右側</button>
+        <button class="location-btn" data-loc="左側" onclick="toggleLocation(this)">左側</button>
+        <button class="location-btn" data-loc="前頭部" onclick="toggleLocation(this)">前頭部</button>
+        <button class="location-btn" data-loc="後頭部" onclick="toggleLocation(this)">後頭部</button>
+        <button class="location-btn" data-loc="こめかみ" onclick="toggleLocation(this)">こめかみ</button>
+        <button class="location-btn" data-loc="全体" onclick="toggleLocation(this)">全体</button>
+      </div>
+    </div>
+
+    <!-- Step 3: 症状 -->
+    <div class="step-screen" id="step-3">
+      <div class="step-question">
+        どんな痛みですか？
+        <span class="optional-label">任意</span>
+      </div>
+      <div class="step-hint">複数選択できます</div>
+      <div class="tag-group" role="group" aria-label="症状の種類">
+        <button class="tag" data-val="ズキズキ" onclick="toggleTag(this)">💓 ズキズキ</button>
+        <button class="tag" data-val="締め付け感" onclick="toggleTag(this)">🤯 締め付け感</button>
+        <button class="tag" data-val="吐き気あり" onclick="toggleTag(this)">😨 吐き気あり</button>
+        <button class="tag" data-val="光がつらい" onclick="toggleTag(this)">☀️ 光がつらい</button>
+        <button class="tag" data-val="音がつらい" onclick="toggleTag(this)">🔊 音がつらい</button>
+        <button class="tag" data-val="目がかすむ" onclick="toggleTag(this)">👁 目がかすむ</button>
+      </div>
+    </div>
+
+    <!-- Step 4: トリガー -->
+    <div class="step-screen" id="step-4">
+      <div class="step-question">
+        心当たりはありますか？
+        <span class="optional-label">任意</span>
+      </div>
+      <div class="step-hint">原因として思い当たることを選んでください</div>
+      <div class="tag-group" role="group" aria-label="トリガー">
+        <button class="tag" data-val="寝不足" onclick="toggleTag(this)">😴 寝不足</button>
+        <button class="tag" data-val="ストレス" onclick="toggleTag(this)">😣 ストレス</button>
+        <button class="tag" data-val="お酒" onclick="toggleTag(this)">🍷 お酒</button>
+        <button class="tag" data-val="眼精疲労" onclick="toggleTag(this)">💻 眼精疲労</button>
+        <button class="tag" data-val="肩こり" onclick="toggleTag(this)">💆 肩こり</button>
+        <button class="tag" data-val="天気" onclick="toggleTag(this)">🌧 天気</button>
+        <button class="tag" data-val="生理前後" onclick="toggleTag(this)">🌸 生理前後</button>
+        <button class="tag" data-val="食事" onclick="toggleTag(this)">🍽 食事</button>
+        <button class="tag" data-val="その他" onclick="toggleTag(this)">📝 その他</button>
+      </div>
+    </div>
+
+    <!-- Step 5: 薬 -->
+    <div class="step-screen" id="step-5">
+      <div class="step-question">
+        お薬は飲みましたか？
+        <span class="optional-label">任意</span>
+      </div>
+      <div class="step-hint">服薬過多を防ぐために記録しておきましょう</div>
+
+      <div class="med-options" role="group" aria-label="服薬状況">
+        <button class="med-btn" data-val="taken" onclick="selectMed(this)">
+          <span class="med-icon">💊</span>
+          <span>飲んだ</span>
+        </button>
+        <button class="med-btn" data-val="later" onclick="selectMed(this)">
+          <span class="med-icon">⏰</span>
+          <span>後で飲む</span>
+        </button>
+        <button class="med-btn" data-val="none" onclick="selectMed(this)">
+          <span class="med-icon">🚫</span>
+          <span>飲んでいない</span>
+        </button>
+      </div>
+
+      <div class="med-detail" id="med-detail">
+        <input class="form-input" id="med-name" type="text" placeholder="薬の名前（例: ロキソニン）" aria-label="薬の名前">
+        <div class="count-select">
+          <button class="count-btn" onclick="changeCount(-1)" aria-label="減らす">−</button>
+          <span class="count-value" id="med-count">1</span>
+          <button class="count-btn" onclick="changeCount(1)" aria-label="増やす">＋</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 完了画面 -->
+    <div class="step-screen" id="step-complete">
+      <div class="complete-circle" aria-hidden="true">✓</div>
+      <div class="complete-title">記録しました</div>
+      <div class="complete-sub">
+        お疲れ様でした。<br>
+        今できるケアを確認してみましょう。
+      </div>
+      <div class="complete-actions">
+        <a href="care.html" class="btn btn-primary" aria-label="今できるケアを見る">
+          今できるケアを見る 💆
+        </a>
+        <a href="index.html" class="btn btn-ghost">
+          ホームに戻る
+        </a>
+      </div>
+    </div>
+
+    <!-- ナビボタン -->
+    <div class="step-nav" id="step-nav">
+      <button class="btn-back" id="btn-back" onclick="prevStep()" aria-label="戻る" style="display:none;">‹</button>
+      <button class="btn btn-primary" id="btn-next" onclick="nextStep()" aria-label="次へ">次へ</button>
+    </div>
+  </div>
+
+  <!-- ボトムナビ -->
+  <nav class="bottom-nav" aria-label="メインナビゲーション">
+    <a href="index.html" class="nav-item" aria-label="ホーム">
+      <span class="nav-icon">🏠</span><span>ホーム</span>
+    </a>
+    <a href="calendar.html" class="nav-item" aria-label="カレンダー">
+      <span class="nav-icon">📅</span><span>カレンダー</span>
+    </a>
+    <a href="record.html" class="nav-item nav-record active" aria-label="記録する">
+      <span class="nav-icon">✏️</span><span>記録</span>
+    </a>
+    <a href="analysis.html" class="nav-item" aria-label="分析">
+      <span class="nav-icon">📊</span><span>分析</span>
+    </a>
+    <a href="settings.html" class="nav-item" aria-label="設定">
+      <span class="nav-icon">⚙️</span><span>設定</span>
+    </a>
+  </nav>
+
+  <script src="js/app.js"></script>
+  <script>
+    /* ==============================
+       記録フォーム ロジック
+       ============================== */
+
+    const TOTAL_STEPS = 5;
+    let currentStep = 1;
+
+    // 記録データ
+    const record = {
+      id: null,
+      timestamp: null,
+      intensity: null,
+      location: [],
+      symptoms: [],
+      triggers: [],
+      medication: { taken: false, status: 'none', name: '', count: 1 }
+    };
+
+    const INTENSITY_LABELS = [
+      '痛みなし', 'ほぼ気にならない', '軽い', 'やや気になる',
+      '少し辛い', '中程度', '結構痛い', 'かなり痛い',
+      'とても辛い', '激しい痛み', '最大の痛み'
+    ];
+
+    /* --- 強度ボタン生成 --- */
+    function buildIntensityButtons() {
+      const wrap = document.querySelector('.intensity-buttons');
+      wrap.innerHTML = '';
+      for (let i = 0; i <= 10; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'intensity-btn';
+        btn.textContent = i;
+        btn.setAttribute('aria-label', `強度 ${i}: ${INTENSITY_LABELS[i]}`);
+        // 色グラデーション
+        const colors = [
+          '#CCCCCC','#B8D4E8','#A8C8E0','#8FBDD6',
+          '#A89CC8','#9B8BBF','#8E79B5','#C88080',
+          '#D96060','#E04040','#E02020'
+        ];
+        btn.style.background = colors[i];
+        btn.style.color = i <= 2 ? '#444' : '#fff';
+        btn.addEventListener('click', () => selectIntensity(i, btn));
+        wrap.appendChild(btn);
+      }
+    }
+
+    function selectIntensity(n, btn) {
+      document.querySelectorAll('.intensity-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      record.intensity = n;
+
+      const numEl = document.getElementById('intensity-number');
+      numEl.textContent = n;
+      numEl.style.color = APP.intensityColor(n);
+      document.getElementById('intensity-label').textContent = INTENSITY_LABELS[n];
+      numEl.style.animation = 'none';
+      void numEl.offsetWidth;
+      numEl.style.animation = 'popIn 0.25s ease';
+    }
+
+    /* --- 場所トグル --- */
+    function toggleLocation(btn) {
+      btn.classList.toggle('selected');
+      const loc = btn.dataset.loc;
+      const idx = record.location.indexOf(loc);
+      if (idx === -1) record.location.push(loc);
+      else record.location.splice(idx, 1);
+    }
+
+    /* --- タグトグル (症状/トリガー) --- */
+    function toggleTag(btn) {
+      const stepId = btn.closest('.step-screen').id;
+      const arr = stepId === 'step-3' ? record.symptoms : record.triggers;
+      btn.classList.toggle('selected');
+      const val = btn.dataset.val;
+      const idx = arr.indexOf(val);
+      if (idx === -1) arr.push(val);
+      else arr.splice(idx, 1);
+    }
+
+    /* --- 薬選択 --- */
+    function selectMed(btn) {
+      document.querySelectorAll('.med-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      record.medication.status = btn.dataset.val;
+      record.medication.taken = btn.dataset.val === 'taken';
+      const detail = document.getElementById('med-detail');
+      detail.classList.toggle('visible', btn.dataset.val === 'taken');
+    }
+
+    let medCount = 1;
+    function changeCount(delta) {
+      medCount = Math.max(1, Math.min(10, medCount + delta));
+      document.getElementById('med-count').textContent = medCount;
+      record.medication.count = medCount;
+    }
+
+    /* --- ステップ制御 --- */
+    function updateStepper() {
+      for (let i = 1; i <= TOTAL_STEPS; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        if (!dot) continue;
+        dot.className = 'step-dot';
+        if (i < currentStep) dot.classList.add('done');
+        else if (i === currentStep) dot.classList.add('active');
+      }
+      for (let i = 1; i < TOTAL_STEPS; i++) {
+        const line = document.getElementById(`line-${i}`);
+        if (line) line.className = 'step-line' + (i < currentStep ? ' done' : '');
+      }
+    }
+
+    function showStep(n) {
+      document.querySelectorAll('.step-screen').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById(n <= TOTAL_STEPS ? `step-${n}` : 'step-complete');
+      if (target) target.classList.add('active');
+
+      const nav = document.getElementById('step-nav');
+      const backBtn = document.getElementById('btn-back');
+      const nextBtn = document.getElementById('btn-next');
+
+      if (n > TOTAL_STEPS) {
+        nav.style.display = 'none';
+        document.getElementById('stepper').style.display = 'none';
+      } else {
+        nav.style.display = 'flex';
+        backBtn.style.display = n > 1 ? 'flex' : 'none';
+        // Step3/4/5 は任意 → スキップ可なので「次へ/完了」文言
+        nextBtn.textContent = n === TOTAL_STEPS ? '記録する ✓' : '次へ';
+      }
+    }
+
+    function nextStep() {
+      // バリデーション
+      if (currentStep === 1 && record.intensity === null) {
+        shakeElement(document.getElementById('step-1'));
+        return;
+      }
+      if (currentStep === 2 && record.location.length === 0) {
+        shakeElement(document.getElementById('step-2'));
+        return;
+      }
+
+      if (currentStep === TOTAL_STEPS) {
+        // 薬詳細の保存
+        if (record.medication.taken) {
+          record.medication.name = document.getElementById('med-name').value.trim();
+          record.medication.count = medCount;
+        }
+        saveRecord();
+        currentStep++;
+        showStep(currentStep);
+        return;
+      }
+
+      currentStep++;
+      updateStepper();
+      showStep(currentStep);
+    }
+
+    function prevStep() {
+      if (currentStep <= 1) return;
+      currentStep--;
+      updateStepper();
+      showStep(currentStep);
+    }
+
+    function saveRecord() {
+      if (!APP.canAddRecord()) {
+        // 上限に達している場合はアップグレード誘導
+        const count = APP.getRecords().length;
+        document.getElementById('step-complete').innerHTML = `
+          <div style="text-align:center;padding:20px 0;">
+            <div style="font-size:2.5rem;margin-bottom:12px;">🔒</div>
+            <div style="font-size:1.1rem;font-weight:700;margin-bottom:8px;">記録上限に達しました</div>
+            <div style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:24px;line-height:1.6;">
+              無料プランは${APP.FREE_RECORD_LIMIT}件まで記録できます。<br>
+              プレミアムプランで無制限に記録しましょう。
+            </div>
+            <a href="settings.html" style="display:inline-block;padding:14px 28px;background:var(--color-primary);color:#fff;text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:0.95rem;">
+              プレミアムにアップグレード ✨
+            </a>
+            <br><br>
+            <a href="index.html" style="font-size:0.85rem;color:var(--color-text-muted);">ホームに戻る</a>
+          </div>`;
+        return;
+      }
+      record.id = APP.uuid();
+      record.timestamp = new Date().toISOString();
+      APP.addRecord({ ...record });
+    }
+
+    function shakeElement(el) {
+      el.style.animation = 'none';
+      void el.offsetWidth;
+      el.style.animation = 'shake 0.3s ease';
+    }
+
+    // シェイクアニメーション
+    const shakeStyle = document.createElement('style');
+    shakeStyle.textContent = `
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20% { transform: translateX(-6px); }
+        40% { transform: translateX(6px); }
+        60% { transform: translateX(-4px); }
+        80% { transform: translateX(4px); }
+      }
+    `;
+    document.head.appendChild(shakeStyle);
+
+    /* --- 初期化 --- */
+    document.addEventListener('DOMContentLoaded', () => {
+      buildIntensityButtons();
+      updateStepper();
+      showStep(1);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7C6FAF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="images/icons/icon.svg">
+  <title>ケアガイド — 174°</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* タイプ判定カード */
+    .type-card {
+      background: linear-gradient(135deg, var(--color-primary) 0%, #9B8BBF 100%);
+      border-radius: var(--radius);
+      padding: 20px;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .type-label {
+      font-size: 0.72rem;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+    .type-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      margin-bottom: 4px;
+    }
+    .type-sub { font-size: 0.85rem; opacity: 0.85; }
+
+    /* ケアセクション */
+    .care-section {
+      margin-bottom: 20px;
+    }
+    .care-section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 今すぐできることカード */
+    .now-care-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .now-care-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--color-surface);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      box-shadow: var(--shadow-card);
+    }
+    .now-care-icon { font-size: 1.6rem; flex-shrink: 0; }
+    .now-care-text { font-size: 0.95rem; font-weight: 500; }
+    .now-care-sub  { font-size: 0.78rem; color: var(--color-text-muted); margin-top: 2px; }
+
+    /* ツボカード */
+    .tsubo-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .tsubo-card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .tsubo-svg-wrap {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--color-primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .tsubo-svg-wrap svg { width: 44px; height: 44px; }
+    .tsubo-info { flex: 1; }
+    .tsubo-name { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+    .tsubo-location { font-size: 0.78rem; color: var(--color-primary); margin-bottom: 6px; }
+    .tsubo-desc { font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.6; }
+
+    /* ストレッチ */
+    .stretch-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stretch-step {
+      display: flex;
+      gap: 14px;
+      background: var(--color-surface);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      box-shadow: var(--shadow-card);
+      align-items: flex-start;
+    }
+    .stretch-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: 'DM Serif Display', serif;
+    }
+    .stretch-content { flex: 1; }
+    .stretch-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 2px; }
+    .stretch-desc  { font-size: 0.82rem; color: var(--color-text-muted); line-height: 1.6; }
+
+    /* アフィリエイト商品 */
+    .product-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .product-card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+    .product-thumb {
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius-sm);
+      background: var(--color-primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
+    }
+    .product-info { flex: 1; }
+    .product-name { font-size: 0.9rem; font-weight: 700; margin-bottom: 2px; }
+    .product-desc { font-size: 0.78rem; color: var(--color-text-muted); margin-bottom: 8px; line-height: 1.5; }
+    .product-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #FF9900;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .product-btn:active { opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <a href="index.html" class="logo">174°</a>
+    <div class="header-actions">
+      <button class="icon-btn" aria-label="通知">🔔</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <div class="page-title-bar">
+      <h1>ケアガイド</h1>
+      <div class="subtitle">今の頭痛に合ったケアを見つけましょう</div>
+    </div>
+
+    <div class="container mt-12">
+
+      <!-- 頭痛タイプ判定 -->
+      <div class="type-card">
+        <div class="type-label">あなたの最近の頭痛パターン</div>
+        <div class="type-name" id="type-name">片頭痛の可能性が高め</div>
+        <div class="type-sub" id="type-sub">ズキズキ感・光への過敏が多く記録されています</div>
+      </div>
+
+      <!-- ① 今すぐできること -->
+      <div class="care-section">
+        <div class="care-section-title">⚡ 今すぐできること</div>
+        <div class="now-care-list" id="now-care-list">
+          <!-- JSで動的に生成 -->
+        </div>
+      </div>
+
+      <!-- ② ツボ押しガイド -->
+      <div class="care-section">
+        <div class="care-section-title">👆 ツボ押しガイド</div>
+        <div class="tsubo-grid">
+
+          <div class="tsubo-card">
+            <div class="tsubo-svg-wrap" aria-hidden="true">
+              <!-- 手のSVG -->
+              <svg viewBox="0 0 44 44" fill="none">
+                <ellipse cx="22" cy="28" rx="12" ry="10" fill="#C8BEEA" stroke="#7C6FAF" stroke-width="1.5"/>
+                <rect x="16" y="10" width="5" height="14" rx="2.5" fill="#C8BEEA" stroke="#7C6FAF" stroke-width="1.5"/>
+                <rect x="22" y="8" width="5" height="16" rx="2.5" fill="#C8BEEA" stroke="#7C6FAF" stroke-width="1.5"/>
+                <rect x="28" y="10" width="5" height="14" rx="2.5" fill="#C8BEEA" stroke="#7C6FAF" stroke-width="1.5"/>
+                <circle cx="20" cy="22" r="3" fill="#7C6FAF" opacity="0.7"/>
+              </svg>
+            </div>
+            <div class="tsubo-info">
+              <div class="tsubo-name">合谷（ごうこく）</div>
+              <div class="tsubo-location">📍 手の甲・親指と人差し指の間</div>
+              <div class="tsubo-desc">頭痛・肩こり全般に効果的。強めに5〜10秒押し、3回繰り返しましょう</div>
+            </div>
+          </div>
+
+          <div class="tsubo-card">
+            <div class="tsubo-svg-wrap" aria-hidden="true">
+              <!-- 後頭部SVG -->
+              <svg viewBox="0 0 44 44" fill="none">
+                <ellipse cx="22" cy="20" rx="14" ry="14" fill="#C8BEEA" stroke="#7C6FAF" stroke-width="1.5"/>
+                <rect x="16" y="32" width="12" height="8" rx="4" fill="#C8BEEA" stroke="#7C6FAF" stroke-width="1.5"/>
+                <circle cx="14" cy="26" r="3" fill="#7C6FAF" opacity="0.7"/>
+                <circle cx="30" cy="26" r="3" fill="#7C6FAF" opacity="0.7"/>
+              </svg>
+            </div>
+            <div class="tsubo-info">
+              <div class="tsubo-name">風池（ふうち）</div>
+              <div class="tsubo-location">📍 後頭部・髪の生え際の両くぼみ</div>
+              <div class="tsubo-desc">片頭痛・緊張型頭痛に。両親指で上方向にゆっくり圧迫。息を吐きながら押して</div>
+            </div>
+          </div>
+
+          <div class="tsubo-card">
+            <div class="tsubo-svg-wrap" aria-hidden="true">
+              <!-- こめかみSVG -->
+              <svg viewBox="0 0 44 44" fill="none">
+                <ellipse cx="22" cy="22" rx="14" ry="16" fill="#C8BEEA" stroke="#7C6FAF" stroke-width="1.5"/>
+                <circle cx="8" cy="20" r="3" fill="#7C6FAF" opacity="0.7"/>
+              </svg>
+            </div>
+            <div class="tsubo-info">
+              <div class="tsubo-name">太陽（たいよう）</div>
+              <div class="tsubo-location">📍 こめかみのくぼみ</div>
+              <div class="tsubo-desc">こめかみの頭痛に。中指の腹で円を描くようにやさしくマッサージしましょう</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ③ ストレッチガイド -->
+      <div class="care-section">
+        <div class="care-section-title">🤸 首・肩のストレッチ</div>
+        <div class="stretch-steps">
+          <div class="stretch-step">
+            <div class="stretch-num">1</div>
+            <div class="stretch-content">
+              <div class="stretch-title">首をゆっくり横に倒す</div>
+              <div class="stretch-desc">右耳を右肩に近づけるように、ゆっくりと倒す。10秒キープして反対側も同様に</div>
+            </div>
+          </div>
+          <div class="stretch-step">
+            <div class="stretch-num">2</div>
+            <div class="stretch-content">
+              <div class="stretch-title">肩をぐるぐる回す</div>
+              <div class="stretch-desc">両肩を耳に近づけるように持ち上げ、ゆっくり後ろに回す。5回繰り返す</div>
+            </div>
+          </div>
+          <div class="stretch-step">
+            <div class="stretch-num">3</div>
+            <div class="stretch-content">
+              <div class="stretch-title">首を前後にゆっくり動かす</div>
+              <div class="stretch-desc">あごを胸に近づけて10秒。次に天井を見上げて10秒。2〜3回繰り返す</div>
+            </div>
+          </div>
+          <div class="stretch-step">
+            <div class="stretch-num">4</div>
+            <div class="stretch-content">
+              <div class="stretch-title">胸を開くストレッチ</div>
+              <div class="stretch-desc">両手を背中で組み、胸を前に突き出すように広げる。10秒キープ</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ④ アフィリエイト商品 -->
+      <div class="care-section">
+        <div class="care-section-title">🛒 このケアに役立つアイテム</div>
+        <div class="product-cards">
+          <div class="product-card">
+            <div class="product-thumb">🧊</div>
+            <div class="product-info">
+              <div class="product-name">冷却ジェルシート（首・おでこ用）</div>
+              <div class="product-desc">片頭痛のときに素早く冷却。長時間持続タイプで外出先でも使えます</div>
+              <a href="https://www.amazon.co.jp/s?k=%E5%86%B7%E5%8D%B4%E3%82%B7%E3%83%BC%E3%83%88+%E9%A0%AD%E7%97%9B" class="product-btn" target="_blank" rel="noopener noreferrer" aria-label="Amazonで冷却シートを検索">Amazonで見る ›</a>
+            </div>
+          </div>
+          <div class="product-card">
+            <div class="product-thumb">💊</div>
+            <div class="product-info">
+              <div class="product-name">マグネシウムサプリメント</div>
+              <div class="product-desc">片頭痛予防に効果的とされるマグネシウム。毎日の習慣として取り入れやすいタブレットタイプ</div>
+              <a href="https://www.amazon.co.jp/s?k=%E3%83%9E%E3%82%B0%E3%83%8D%E3%82%B7%E3%82%A6%E3%83%A0+%E3%82%B5%E3%83%97%E3%83%AA%E3%83%A1%E3%83%B3%E3%83%88+%E9%A0%AD%E7%97%9B" class="product-btn" target="_blank" rel="noopener noreferrer" aria-label="Amazonでマグネシウムサプリを検索">Amazonで見る ›</a>
+            </div>
+          </div>
+          <div class="product-card">
+            <div class="product-thumb">🌿</div>
+            <div class="product-info">
+              <div class="product-name">アロマロールオン（ペパーミント）</div>
+              <div class="product-desc">こめかみに塗るだけでスッキリ。外出先でもすぐ使えるスティックタイプ</div>
+              <a href="https://www.amazon.co.jp/s?k=%E3%83%9A%E3%83%91%E3%83%BC%E3%83%9F%E3%83%B3%E3%83%88+%E3%82%A2%E3%83%AD%E3%83%9E+%E3%83%AD%E3%83%BC%E3%83%AB%E3%82%AA%E3%83%B3" class="product-btn" target="_blank" rel="noopener noreferrer" aria-label="Amazonでアロマロールオンを検索">Amazonで見る ›</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ボトムナビ -->
+  <nav class="bottom-nav" aria-label="メインナビゲーション">
+    <a href="index.html" class="nav-item" aria-label="ホーム">
+      <span class="nav-icon">🏠</span><span>ホーム</span>
+    </a>
+    <a href="calendar.html" class="nav-item" aria-label="カレンダー">
+      <span class="nav-icon">📅</span><span>カレンダー</span>
+    </a>
+    <a href="record.html" class="nav-item nav-record" aria-label="記録する">
+      <span class="nav-icon">✏️</span><span>記録</span>
+    </a>
+    <a href="analysis.html" class="nav-item" aria-label="分析">
+      <span class="nav-icon">📊</span><span>分析</span>
+    </a>
+    <a href="settings.html" class="nav-item" aria-label="設定">
+      <span class="nav-icon">⚙️</span><span>設定</span>
+    </a>
+  </nav>
+
+  <script src="js/app.js"></script>
+  <script>
+    const CARE_ITEMS = {
+      migraine: [
+        { icon: '🌑', text: '暗い静かな場所で横になる',   sub: '光・音の刺激を避け、安静にしましょう' },
+        { icon: '🧊', text: '患部を冷やす',               sub: '片頭痛には冷却が効果的。こめかみや首の後ろに' },
+        { icon: '💧', text: '水をゆっくり飲む',           sub: '脱水が頭痛を悪化させます。200ml程度を目安に' },
+        { icon: '☕', text: 'カフェインを少量摂る',       sub: 'コーヒー1杯分程度。血管収縮を助けることがあります' },
+        { icon: '💊', text: '市販薬を服用する',           sub: 'イブプロフェン系が片頭痛に効果的とされています' },
+      ],
+      tension: [
+        { icon: '🔥', text: '肩・首を温める',             sub: '緊張型頭痛には温めが有効。蒸しタオルなどで' },
+        { icon: '💆', text: '首・肩を軽くマッサージ',     sub: '筋肉の緊張をほぐしましょう。下のストレッチも参考に' },
+        { icon: '💧', text: '水をゆっくり飲む',           sub: '脱水が頭痛を悪化させます。200ml程度を目安に' },
+        { icon: '🧘', text: '深呼吸・リラックス',         sub: 'ゆっくり4秒吸って8秒かけて吐く腹式呼吸を試して' },
+        { icon: '🚶', text: '軽く体を動かす',             sub: '気分転換の散歩が緊張をほぐすことがあります' },
+      ],
+      default: [
+        { icon: '💧', text: '水をゆっくり飲む',           sub: '脱水が頭痛を悪化させます。200ml程度を目安に' },
+        { icon: '🌑', text: '暗い静かな場所で横になる',   sub: '光・音の刺激を避け、安静にしましょう' },
+        { icon: '🔥', text: '肩・首を温める',             sub: '緊張型には温めが有効。蒸しタオルなどで' },
+        { icon: '🧊', text: '患部を冷やす',               sub: '片頭痛には冷却が効果的。こめかみや首の後ろに' },
+        { icon: '☕', text: 'カフェインを少量摂る',       sub: 'コーヒー1杯分程度。血管収縮を助けることがあります' },
+      ],
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const records = APP.getRecords();
+      const typeEl  = document.getElementById('type-name');
+      const subEl   = document.getElementById('type-sub');
+      const careList = document.getElementById('now-care-list');
+
+      let headacheType = 'default';
+
+      if (records.length > 0) {
+        const recent   = records.slice(0, 5);
+        const symptoms = recent.flatMap(r => r.symptoms || []);
+        const pulsing  = symptoms.filter(s => s === 'ズキズキ').length;
+        const tight    = symptoms.filter(s => s === '締め付け感').length;
+
+        if (pulsing > tight) {
+          headacheType = 'migraine';
+          typeEl.textContent = '片頭痛の可能性が高め';
+          subEl.textContent  = 'ズキズキ感・光への過敏が多く記録されています';
+        } else if (tight >= pulsing && tight > 0) {
+          headacheType = 'tension';
+          typeEl.textContent = '緊張型頭痛の可能性が高め';
+          subEl.textContent  = '締め付け感・肩こりが多く記録されています';
+        } else {
+          typeEl.textContent = 'パターン分析中';
+          subEl.textContent  = '記録を続けるとより精度が上がります';
+        }
+      }
+
+      // 頭痛タイプに合ったケアアイテムを描画
+      careList.innerHTML = CARE_ITEMS[headacheType].map(item => `
+        <div class="now-care-item">
+          <span class="now-care-icon">${item.icon}</span>
+          <div>
+            <div class="now-care-text">${item.text}</div>
+            <div class="now-care-sub">${item.sub}</div>
+          </div>
+        </div>
+      `).join('');
+    });
+  </script>
+</body>
+</html>

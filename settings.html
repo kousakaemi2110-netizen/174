@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7C6FAF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="images/icons/icon.svg">
+  <title>設定 — 174°</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* プランカード */
+    .plan-card {
+      background: linear-gradient(135deg, var(--color-primary) 0%, #B09FD8 100%);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      color: #fff;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .plan-card::after {
+      content: '✨';
+      position: absolute;
+      right: 20px;
+      top: 18px;
+      font-size: 1.8rem;
+    }
+    .plan-current {
+      font-size: 0.72rem;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+    .plan-name {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      margin-bottom: 12px;
+    }
+    .plan-upgrade-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      color: var(--color-primary-dark);
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-decoration: none;
+      font-family: 'Noto Sans JP', sans-serif;
+      transition: opacity 0.15s, transform 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .plan-upgrade-btn:active { opacity: 0.9; transform: scale(0.97); }
+    .plan-price {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+    }
+
+    /* 設定セクション */
+    .settings-section {
+      margin-bottom: 24px;
+    }
+    .settings-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0 4px;
+      margin-bottom: 8px;
+    }
+    .settings-list {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--color-border);
+      gap: 12px;
+      min-height: 60px;
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row-icon {
+      font-size: 1.3rem;
+      width: 32px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .settings-row-label {
+      flex: 1;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    .settings-row-sub {
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+      margin-top: 1px;
+    }
+    .settings-row-value {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      margin-right: 4px;
+    }
+    .settings-chevron {
+      color: var(--color-border);
+      font-size: 1.2rem;
+    }
+    .settings-row.tappable {
+      cursor: pointer;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .settings-row.tappable:active { background: var(--color-primary-light); }
+
+    /* データ管理ボタン */
+    .data-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px 18px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--color-border);
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--color-text);
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .data-btn:last-child { border-bottom: none; }
+    .data-btn:active { background: var(--color-primary-light); }
+    .data-btn.danger { color: var(--color-danger); }
+
+    /* バージョン情報 */
+    .about-section {
+      text-align: center;
+      padding: 24px 0 8px;
+    }
+    .about-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2rem;
+      color: var(--color-primary);
+      margin-bottom: 4px;
+    }
+    .about-version {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      margin-bottom: 16px;
+    }
+    .about-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    .about-link {
+      font-size: 0.8rem;
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+    .about-link:active { opacity: 0.7; }
+
+    /* モーダル */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 500;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet {
+      background: var(--color-surface);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 24px 20px 40px;
+      width: 100%;
+      max-width: 480px;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(60px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+  </style>
+
+  <!-- 受診レポート印刷用スタイル -->
+  <style id="print-styles">
+    @media print {
+      body * { visibility: hidden; }
+      #print-report, #print-report * { visibility: visible; }
+      #print-report {
+        position: fixed; inset: 0;
+        padding: 20mm 15mm;
+        font-family: 'Noto Sans JP', sans-serif;
+        font-size: 11pt;
+        color: #000;
+        background: #fff;
+      }
+      .pr-title {
+        font-size: 18pt; font-weight: bold;
+        text-align: center; margin-bottom: 4mm;
+        border-bottom: 2pt solid #7C6FAF; padding-bottom: 3mm;
+      }
+      .pr-meta { font-size: 9pt; color: #555; text-align: center; margin-bottom: 8mm; }
+      .pr-section { margin-bottom: 6mm; }
+      .pr-section-title {
+        font-size: 12pt; font-weight: bold; color: #5A4F8A;
+        border-left: 3pt solid #7C6FAF; padding-left: 6pt; margin-bottom: 3mm;
+      }
+      .pr-stat-grid { display: flex; gap: 8mm; margin-bottom: 4mm; }
+      .pr-stat { text-align: center; border: 1pt solid #ccc; padding: 3mm 5mm; border-radius: 4pt; }
+      .pr-stat-num { font-size: 18pt; font-weight: bold; color: #7C6FAF; line-height: 1; }
+      .pr-stat-label { font-size: 8pt; color: #666; margin-top: 1mm; }
+      .pr-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+      .pr-table th {
+        background: #EDE9F8; padding: 2mm 3mm;
+        border: 0.5pt solid #ccc; text-align: left; font-size: 9pt;
+      }
+      .pr-table td { padding: 2mm 3mm; border: 0.5pt solid #ccc; }
+      .pr-table tr:nth-child(even) td { background: #FAFAF8; }
+      .pr-footer { margin-top: 8mm; font-size: 8pt; color: #999; text-align: center; }
+    }
+  </style>
+
+  <!-- 印刷レポート DOM（画面非表示） -->
+  <div id="print-report" style="display:none"></div>
+</head>
+<body>
+  <header class="app-header">
+    <a href="index.html" class="logo">174°</a>
+    <div class="header-actions">
+      <button class="icon-btn" aria-label="通知">🔔</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <div class="page-title-bar">
+      <h1>設定</h1>
+    </div>
+
+    <div class="container mt-12">
+
+      <!-- プランカード -->
+      <div class="plan-card" id="plan-card">
+        <div class="plan-current">現在のプラン</div>
+        <div class="plan-name" id="plan-name">無料プラン</div>
+        <div id="plan-action">
+          <button onclick="startUpgrade()" class="plan-upgrade-btn" aria-label="プレミアムにアップグレード" id="upgrade-btn" style="border:none;cursor:pointer;">
+            <span class="plan-price">¥174/月</span>
+            プレミアムにアップグレード
+          </button>
+        </div>
+      </div>
+
+      <!-- ① アカウント / クラウド同期 -->
+      <div class="settings-section">
+        <div class="settings-section-title">アカウント</div>
+        <div class="settings-list" id="account-section">
+          <!-- JS で描画 -->
+        </div>
+      </div>
+
+      <!-- ② プロフィール -->
+      <div class="settings-section">
+        <div class="settings-section-title">プロフィール</div>
+        <div class="settings-list">
+          <div class="settings-row tappable" onclick="openModal('modal-nickname')">
+            <span class="settings-row-icon">😊</span>
+            <div style="flex:1">
+              <div class="settings-row-label">ニックネーム</div>
+            </div>
+            <span class="settings-row-value" id="display-nickname">未設定</span>
+            <span class="settings-chevron">›</span>
+          </div>
+          <div class="settings-row tappable" onclick="openModal('modal-birthday')">
+            <span class="settings-row-icon">🎂</span>
+            <div style="flex:1">
+              <div class="settings-row-label">生年月日</div>
+            </div>
+            <span class="settings-row-value" id="display-birthday">未設定</span>
+            <span class="settings-chevron">›</span>
+          </div>
+          <div class="settings-row tappable" onclick="openModal('modal-cycle')">
+            <span class="settings-row-icon">🌸</span>
+            <div style="flex:1">
+              <div class="settings-row-label">生理周期</div>
+              <div class="settings-row-sub">任意・頭痛との相関分析に使用</div>
+            </div>
+            <span class="settings-row-value" id="display-cycle">未設定</span>
+            <span class="settings-chevron">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ 通知設定 -->
+      <div class="settings-section">
+        <div class="settings-section-title">通知設定</div>
+        <div class="settings-list">
+          <div class="settings-row">
+            <span class="settings-row-icon">🌧</span>
+            <div style="flex:1">
+              <div class="settings-row-label">気圧アラート</div>
+              <div class="settings-row-sub">気圧が急降下する前に通知</div>
+            </div>
+            <label class="toggle-switch" aria-label="気圧アラートのON/OFF">
+              <input type="checkbox" id="toggle-pressure" onchange="saveToggle('pressure', this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-icon">📊</span>
+            <div style="flex:1">
+              <div class="settings-row-label">週次サマリー</div>
+              <div class="settings-row-sub">毎週月曜日に先週の記録をお知らせ</div>
+            </div>
+            <label class="toggle-switch" aria-label="週次サマリーのON/OFF">
+              <input type="checkbox" id="toggle-weekly" onchange="saveToggle('weekly', this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-icon">🌸</span>
+            <div style="flex:1">
+              <div class="settings-row-label">生理周期アラート</div>
+              <div class="settings-row-sub">生理前後に頭痛注意アラートを送信</div>
+            </div>
+            <label class="toggle-switch" aria-label="生理周期アラートのON/OFF">
+              <input type="checkbox" id="toggle-cycle-alert" onchange="saveToggle('cycleAlert', this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ④ データ管理 -->
+      <div class="settings-section">
+        <div class="settings-section-title">データ管理</div>
+        <div class="settings-list">
+          <button class="data-btn" id="btn-print" onclick="guardPremium(printReport)">
+            <span>📄</span> 受診レポートを出力（PDF）
+            <span id="badge-print" style="margin-left:auto;font-size:0.7rem;background:var(--color-primary);color:#fff;padding:2px 7px;border-radius:20px;">PRO</span>
+          </button>
+          <button class="data-btn" id="btn-csv" onclick="guardPremium(exportCSV)">
+            <span>📥</span> データをエクスポート（CSV）
+            <span id="badge-csv" style="margin-left:auto;font-size:0.7rem;background:var(--color-primary);color:#fff;padding:2px 7px;border-radius:20px;">PRO</span>
+          </button>
+          <button class="data-btn danger" onclick="confirmDeleteData()">
+            <span>🗑</span> すべての記録を削除
+          </button>
+          <button class="data-btn danger" id="btn-delete-account" onclick="confirmDeleteAccount()" style="display:none">
+            <span>⚠️</span> アカウントを削除する
+          </button>
+        </div>
+      </div>
+
+      <!-- ④ アプリについて -->
+      <div class="about-section">
+        <div class="about-logo">174°</div>
+        <div class="about-version">Version 1.0.0</div>
+        <div class="about-links">
+          <a href="#" class="about-link">利用規約</a>
+          <a href="#" class="about-link">プライバシーポリシー</a>
+          <a href="#" class="about-link">お問い合わせ</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ニックネームモーダル -->
+  <div class="modal-overlay" id="modal-nickname" role="dialog" aria-modal="true" aria-label="ニックネーム設定">
+    <div class="modal-sheet">
+      <div class="modal-title">ニックネーム</div>
+      <div class="form-group">
+        <input class="form-input" id="input-nickname" type="text" placeholder="例: はるか" maxlength="20">
+      </div>
+      <button class="btn btn-primary" onclick="saveNickname()">保存する</button>
+      <button class="btn btn-ghost mt-8" onclick="closeModal('modal-nickname')">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- 生年月日モーダル -->
+  <div class="modal-overlay" id="modal-birthday" role="dialog" aria-modal="true" aria-label="生年月日設定">
+    <div class="modal-sheet">
+      <div class="modal-title">生年月日</div>
+      <div class="form-group">
+        <input class="form-input" id="input-birthday" type="date">
+      </div>
+      <button class="btn btn-primary" onclick="saveBirthday()">保存する</button>
+      <button class="btn btn-ghost mt-8" onclick="closeModal('modal-birthday')">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- 生理周期モーダル -->
+  <div class="modal-overlay" id="modal-cycle" role="dialog" aria-modal="true" aria-label="生理周期設定">
+    <div class="modal-sheet">
+      <div class="modal-title">生理周期</div>
+      <div class="form-group">
+        <label class="form-label">周期（日数）</label>
+        <select class="form-select" id="input-cycle">
+          <option value="">選択してください</option>
+          <option value="21">21日</option>
+          <option value="24">24日</option>
+          <option value="25">25日</option>
+          <option value="26">26日</option>
+          <option value="27">27日</option>
+          <option value="28">28日（標準）</option>
+          <option value="30">30日</option>
+          <option value="32">32日</option>
+          <option value="35">35日</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="saveCycle()">保存する</button>
+      <button class="btn btn-ghost mt-8" onclick="closeModal('modal-cycle')">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- ログイン / 新規登録モーダル -->
+  <div class="modal-overlay" id="modal-auth" role="dialog" aria-modal="true" aria-label="ログイン / 登録">
+    <div class="modal-sheet">
+      <div class="modal-title" id="auth-modal-title">ログイン</div>
+      <div id="auth-error" style="display:none;color:var(--color-danger);font-size:0.82rem;margin-bottom:10px;text-align:center;"></div>
+      <div class="form-group" id="auth-nickname-row" style="display:none">
+        <label class="form-label">ニックネーム（任意）</label>
+        <input class="form-input" id="auth-nickname" type="text" placeholder="例: はるか" maxlength="20">
+      </div>
+      <div class="form-group">
+        <label class="form-label">メールアドレス</label>
+        <input class="form-input" id="auth-email" type="email" placeholder="example@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">パスワード（6文字以上）</label>
+        <input class="form-input" id="auth-password" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" id="auth-submit-btn" onclick="submitAuth()">ログイン</button>
+      <button class="btn btn-ghost mt-8" id="auth-toggle-btn" onclick="toggleAuthMode()">新規登録はこちら</button>
+      <button class="btn btn-ghost mt-8" id="auth-forgot-btn" onclick="openForgotModal()"
+        style="font-size:0.82rem;color:var(--color-text-muted);padding:8px;">
+        パスワードを忘れた方はこちら
+      </button>
+      <button class="btn btn-ghost mt-8" onclick="closeModal('modal-auth')" style="color:var(--color-text-muted)">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- パスワードリセット申請モーダル -->
+  <div class="modal-overlay" id="modal-forgot" role="dialog" aria-modal="true" aria-label="パスワードリセット">
+    <div class="modal-sheet">
+      <div class="modal-title">パスワードをリセット</div>
+      <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:16px;text-align:center;line-height:1.6;">
+        登録したメールアドレスを入力してください。<br>リセットリンクをお送りします。
+      </p>
+      <div id="forgot-msg" style="display:none;font-size:0.82rem;margin-bottom:10px;text-align:center;"></div>
+      <div class="form-group">
+        <label class="form-label">メールアドレス</label>
+        <input class="form-input" id="forgot-email" type="email" placeholder="example@email.com" autocomplete="email">
+      </div>
+      <button class="btn btn-primary" id="forgot-submit-btn" onclick="submitForgot()">送信する</button>
+      <button class="btn btn-ghost mt-8" onclick="closeModal('modal-forgot');openAuthModal('login')" style="color:var(--color-text-muted)">ログインに戻る</button>
+    </div>
+  </div>
+
+  <!-- ボトムナビ -->
+  <nav class="bottom-nav" aria-label="メインナビゲーション">
+    <a href="index.html" class="nav-item" aria-label="ホーム">
+      <span class="nav-icon">🏠</span><span>ホーム</span>
+    </a>
+    <a href="calendar.html" class="nav-item" aria-label="カレンダー">
+      <span class="nav-icon">📅</span><span>カレンダー</span>
+    </a>
+    <a href="record.html" class="nav-item nav-record" aria-label="記録する">
+      <span class="nav-icon">✏️</span><span>記録</span>
+    </a>
+    <a href="analysis.html" class="nav-item" aria-label="分析">
+      <span class="nav-icon">📊</span><span>分析</span>
+    </a>
+    <a href="settings.html" class="nav-item active" aria-label="設定">
+      <span class="nav-icon">⚙️</span><span>設定</span>
+    </a>
+  </nav>
+
+  <script src="js/app.js"></script>
+  <script>
+    /* ---- アカウントセクション描画 ---- */
+    function renderAccountSection() {
+      const el = document.getElementById('account-section');
+      if (!el) return;
+      if (APP.isLoggedIn()) {
+        const s   = APP.getSettings();
+        const lastSync = s._lastSync
+          ? new Date(s._lastSync).toLocaleString('ja-JP', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
+          : '未同期';
+        el.innerHTML = `
+          <div class="settings-row">
+            <span class="settings-row-icon">☁️</span>
+            <div style="flex:1">
+              <div class="settings-row-label">クラウド同期</div>
+              <div class="settings-row-sub" id="sync-status-text">最終同期: ${lastSync}</div>
+            </div>
+            <button onclick="doSync()" id="sync-btn"
+              style="background:var(--color-primary);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:0.82rem;font-family:'Noto Sans JP',sans-serif;cursor:pointer;">
+              今すぐ同期
+            </button>
+          </div>
+          <div class="settings-row tappable" onclick="doLogout()">
+            <span class="settings-row-icon">🚪</span>
+            <div style="flex:1">
+              <div class="settings-row-label" style="color:var(--color-danger)">ログアウト</div>
+            </div>
+            <span class="settings-chevron">›</span>
+          </div>
+        `;
+      } else {
+        el.innerHTML = `
+          <div class="settings-row tappable" onclick="openAuthModal('login')">
+            <span class="settings-row-icon">🔑</span>
+            <div style="flex:1">
+              <div class="settings-row-label">ログイン</div>
+              <div class="settings-row-sub">データをクラウドにバックアップ・同期</div>
+            </div>
+            <span class="settings-chevron">›</span>
+          </div>
+          <div class="settings-row tappable" onclick="openAuthModal('register')">
+            <span class="settings-row-icon">✨</span>
+            <div style="flex:1">
+              <div class="settings-row-label">新規登録</div>
+              <div class="settings-row-sub">無料でアカウントを作成</div>
+            </div>
+            <span class="settings-chevron">›</span>
+          </div>
+        `;
+      }
+    }
+
+    /* ---- 認証モーダル ---- */
+    let _authMode = 'login';
+    function openAuthModal(mode) {
+      _authMode = mode || 'login';
+      document.getElementById('auth-error').style.display = 'none';
+      document.getElementById('auth-email').value    = '';
+      document.getElementById('auth-password').value = '';
+      document.getElementById('auth-nickname').value = '';
+      updateAuthModalUI();
+      document.getElementById('modal-auth').classList.add('open');
+    }
+    function updateAuthModalUI() {
+      const isReg = _authMode === 'register';
+      document.getElementById('auth-modal-title').textContent   = isReg ? '新規登録' : 'ログイン';
+      document.getElementById('auth-submit-btn').textContent    = isReg ? '登録する' : 'ログイン';
+      document.getElementById('auth-toggle-btn').textContent    = isReg ? 'ログインはこちら' : '新規登録はこちら';
+      document.getElementById('auth-nickname-row').style.display = isReg ? '' : 'none';
+      document.getElementById('auth-password').setAttribute('autocomplete', isReg ? 'new-password' : 'current-password');
+    }
+    function toggleAuthMode() {
+      _authMode = _authMode === 'login' ? 'register' : 'login';
+      updateAuthModalUI();
+    }
+    async function submitAuth() {
+      const email    = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const nickname = document.getElementById('auth-nickname').value.trim();
+      const errEl    = document.getElementById('auth-error');
+      const btn      = document.getElementById('auth-submit-btn');
+      errEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = '処理中…';
+      try {
+        if (_authMode === 'register') {
+          await APP.register(email, password, nickname);
+        } else {
+          await APP.login(email, password);
+        }
+        closeModal('modal-auth');
+        renderAccountSection();
+        // ログイン後に自動同期
+        doSync();
+      } catch (e) {
+        errEl.textContent    = e.message;
+        errEl.style.display  = 'block';
+        btn.disabled         = false;
+        btn.textContent      = _authMode === 'register' ? '登録する' : 'ログイン';
+      }
+    }
+
+    /* ---- 同期 / ログアウト ---- */
+    async function doSync() {
+      const btn    = document.getElementById('sync-btn');
+      const status = document.getElementById('sync-status-text');
+      if (btn) { btn.disabled = true; btn.textContent = '同期中…'; }
+      try {
+        const count = await APP.syncToCloud();
+        if (status) status.textContent = `最終同期: たった今（${count}件）`;
+        if (btn)    { btn.disabled = false; btn.textContent = '今すぐ同期'; }
+        showToastMsg('クラウドと同期しました');
+      } catch (e) {
+        if (btn)    { btn.disabled = false; btn.textContent = '今すぐ同期'; }
+        showToastMsg('同期に失敗しました: ' + e.message, true);
+        if (e.message.includes('認証') || e.message.includes('トークン')) {
+          APP.logout();
+          renderAccountSection();
+        }
+      }
+    }
+    function doLogout() {
+      if (!confirm('ログアウトしますか？ローカルのデータは保持されます。')) return;
+      APP.logout();
+      renderAccountSection();
+    }
+    function showToastMsg(msg, isErr) {
+      const t = document.createElement('div');
+      t.style.cssText = `position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:${isErr?'#C45A5A':'#5A9E7A'};color:#fff;padding:12px 20px;border-radius:12px;font-size:0.85rem;z-index:999;white-space:nowrap;`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
+
+    /* ---- 設定読み込み ---- */
+    document.addEventListener('DOMContentLoaded', () => {
+      renderAccountSection();
+      // ログイン済みならアカウント削除ボタンを表示
+      if (APP.isLoggedIn()) {
+        const btn = document.getElementById('btn-delete-account');
+        if (btn) btn.style.display = '';
+      }
+      const s = APP.getSettings();
+      if (s.nickname) document.getElementById('display-nickname').textContent = s.nickname;
+      if (s.birthday) document.getElementById('display-birthday').textContent = s.birthday;
+      if (s.cycle)    document.getElementById('display-cycle').textContent = s.cycle + '日';
+      if (s.pressure)   document.getElementById('toggle-pressure').checked = true;
+      if (s.weekly)     document.getElementById('toggle-weekly').checked = true;
+      if (s.cycleAlert) document.getElementById('toggle-cycle-alert').checked = true;
+
+      // プレミアムバッジを非表示
+      if (s.premium) {
+        ['badge-print','badge-csv'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+      }
+
+      // プレミアム状態を反映
+      if (s.premium) {
+        document.getElementById('plan-name').textContent = 'プレミアムプラン ✨';
+        const since = s.premiumSince
+          ? new Date(s.premiumSince).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
+          : null;
+        document.getElementById('plan-action').innerHTML = `
+          <div style="font-size:0.8rem;opacity:0.85;margin-bottom:10px;">${since ? since + ' から有効' : '有効'}</div>
+          <button onclick="cancelPremium()" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:8px 18px;border-radius:8px;font-size:0.85rem;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">
+            プレミアムを解約する
+          </button>
+        `;
+      }
+    });
+
+    /* ---- アカウント削除 ---- */
+    async function confirmDeleteAccount() {
+      if (!confirm('アカウントを完全に削除しますか？\nすべての記録・設定が失われ、この操作は取り消せません。')) return;
+      if (!confirm('本当に削除してもよいですか？\nプレミアムの場合は自動的に解約されます。')) return;
+      try {
+        await APP.apiRequest('/api/me', { method: 'DELETE' });
+        APP.setToken(null);
+        APP.saveRecords([]);
+        APP.saveSettings({});
+        alert('アカウントを削除しました。');
+        location.href = 'index.html';
+      } catch (e) {
+        alert('削除に失敗しました: ' + e.message);
+      }
+    }
+
+    /* ---- プレミアムガード ---- */
+    function guardPremium(fn) {
+      if (APP.isPremium()) { fn(); return; }
+      if (confirm('この機能はプレミアムプラン限定です。\nアップグレードしますか？（¥174/月）')) {
+        startUpgrade();
+      }
+    }
+
+    /* ---- パスワードリセット申請 ---- */
+    function openForgotModal() {
+      closeModal('modal-auth');
+      document.getElementById('forgot-email').value = '';
+      const msg = document.getElementById('forgot-msg');
+      msg.style.display = 'none';
+      document.getElementById('forgot-submit-btn').disabled = false;
+      document.getElementById('forgot-submit-btn').textContent = '送信する';
+      document.getElementById('modal-forgot').classList.add('open');
+    }
+    async function submitForgot() {
+      const email = document.getElementById('forgot-email').value.trim();
+      const msgEl = document.getElementById('forgot-msg');
+      const btn   = document.getElementById('forgot-submit-btn');
+      if (!email) { msgEl.style.cssText = 'display:block;color:var(--color-danger)'; msgEl.textContent = 'メールアドレスを入力してください'; return; }
+      btn.disabled = true; btn.textContent = '送信中…';
+      try {
+        await APP.apiRequest('/api/auth/forgot-password', {
+          method: 'POST',
+          body: JSON.stringify({ email }),
+        });
+        msgEl.style.cssText = 'display:block;color:#5A9E7A';
+        msgEl.textContent = 'リセットリンクを送信しました。メールをご確認ください。';
+        btn.textContent = '送信済み';
+      } catch (e) {
+        msgEl.style.cssText = 'display:block;color:var(--color-danger)';
+        msgEl.textContent = e.message;
+        btn.disabled = false; btn.textContent = '送信する';
+      }
+    }
+
+    async function startUpgrade() {
+      if (!APP.isLoggedIn()) {
+        openAuthModal('login');
+        return;
+      }
+      const btn = document.getElementById('upgrade-btn');
+      if (btn) { btn.disabled = true; btn.textContent = '処理中…'; }
+      try {
+        const data = await APP.apiRequest('/api/stripe/checkout', { method: 'POST' });
+        window.location.href = data.url;
+      } catch (e) {
+        alert('決済ページへの移動に失敗しました: ' + e.message);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<span class="plan-price">¥174/月</span> プレミアムにアップグレード';
+        }
+      }
+    }
+
+    async function cancelPremium() {
+      if (!confirm('プレミアムプランを解約しますか？')) return;
+      if (APP.isLoggedIn()) {
+        try {
+          await APP.apiRequest('/api/stripe/cancel', { method: 'POST' });
+        } catch (e) {
+          alert('解約処理でエラーが発生しました: ' + e.message);
+          return;
+        }
+      }
+      const s = APP.getSettings();
+      delete s.premium;
+      delete s.premiumSince;
+      delete s.stripeSubscriptionId;
+      APP.saveSettings(s);
+      location.reload();
+    }
+
+    /* ---- モーダル ---- */
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+      const s = APP.getSettings();
+      if (id === 'modal-nickname' && s.nickname)
+        document.getElementById('input-nickname').value = s.nickname;
+      if (id === 'modal-birthday' && s.birthday)
+        document.getElementById('input-birthday').value = s.birthday;
+      if (id === 'modal-cycle' && s.cycle)
+        document.getElementById('input-cycle').value = s.cycle;
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+      el.addEventListener('click', e => {
+        if (e.target === el) el.classList.remove('open');
+      });
+    });
+
+    /* ---- 保存 ---- */
+    function saveNickname() {
+      const val = document.getElementById('input-nickname').value.trim();
+      if (!val) return;
+      const s = APP.getSettings();
+      s.nickname = val;
+      APP.saveSettings(s);
+      document.getElementById('display-nickname').textContent = val;
+      closeModal('modal-nickname');
+    }
+    function saveBirthday() {
+      const val = document.getElementById('input-birthday').value;
+      if (!val) return;
+      const s = APP.getSettings();
+      s.birthday = val;
+      APP.saveSettings(s);
+      document.getElementById('display-birthday').textContent = val;
+      closeModal('modal-birthday');
+    }
+    function saveCycle() {
+      const val = document.getElementById('input-cycle').value;
+      if (!val) return;
+      const s = APP.getSettings();
+      s.cycle = val;
+      APP.saveSettings(s);
+      document.getElementById('display-cycle').textContent = val + '日';
+      closeModal('modal-cycle');
+    }
+    async function saveToggle(key, val) {
+      // 通知系トグルはONにする前にパーミッション確認
+      const notifyKeys = ['pressure', 'weekly', 'cycleAlert'];
+      if (val && notifyKeys.includes(key)) {
+        const granted = await requestNotificationPermission();
+        if (!granted) {
+          // 許可されなかったらトグルを戻す
+          const ids = { pressure: 'toggle-pressure', weekly: 'toggle-weekly', cycleAlert: 'toggle-cycle-alert' };
+          document.getElementById(ids[key]).checked = false;
+          showNotifDeniedHint();
+          return;
+        }
+      }
+      const s = APP.getSettings();
+      s[key] = val;
+      APP.saveSettings(s);
+
+      // 週次サマリーをONにしたら翌朝9時に予約
+      if (key === 'weekly' && val) scheduleWeeklySummary();
+    }
+
+    async function requestNotificationPermission() {
+      if (!('Notification' in window)) return false;
+      if (Notification.permission === 'granted') return true;
+      const result = await Notification.requestPermission();
+      return result === 'granted';
+    }
+
+    function showNotifDeniedHint() {
+      const hint = document.createElement('div');
+      hint.style.cssText = `
+        position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+        background:#2C2C2C; color:#fff; padding:12px 20px; border-radius:12px;
+        font-size:0.85rem; z-index:999; text-align:center; max-width:320px;
+      `;
+      hint.textContent = 'ブラウザの通知を許可してください（アドレスバー横の🔒アイコンから設定できます）';
+      document.body.appendChild(hint);
+      setTimeout(() => hint.remove(), 4000);
+    }
+
+    function scheduleWeeklySummary() {
+      // 次の月曜9:00までのミリ秒を計算してlocalStorageに保存（Service Worker未使用のため簡易実装）
+      const now  = new Date();
+      const next = new Date(now);
+      next.setHours(9, 0, 0, 0);
+      const daysUntilMon = (1 - now.getDay() + 7) % 7 || 7;
+      next.setDate(next.getDate() + daysUntilMon);
+      const s = APP.getSettings();
+      s.weeklyNextAt = next.toISOString();
+      APP.saveSettings(s);
+    }
+
+    /* ---- データ操作 ---- */
+
+    function exportCSV() {
+      const records = APP.getRecords();
+      if (records.length === 0) { alert('記録がありません'); return; }
+      const header = '日時,強度,場所,症状,トリガー,服薬';
+      const rows = records.map(r => [
+        r.timestamp,
+        r.intensity,
+        (r.location||[]).join('|'),
+        (r.symptoms||[]).join('|'),
+        (r.triggers||[]).join('|'),
+        r.medication?.taken ? `${r.medication.name} ${r.medication.count}錠` : '—'
+      ].join(','));
+      const csv = [header, ...rows].join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `174_records_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function confirmDeleteData() {
+      if (confirm('すべての記録を削除しますか？この操作は取り消せません。')) {
+        APP.saveRecords([]);
+        alert('削除しました');
+      }
+    }
+
+    /* ---- 受診レポート印刷 ---- */
+    function printReport() {
+      const records = APP.getRecords();
+      if (records.length === 0) { alert('記録がありません'); return; }
+      const s    = APP.getSettings();
+      const now  = new Date();
+      const name = s.nickname || '—';
+
+      // 直近90日分
+      const since = new Date(now - 90 * 86400000);
+      const recent = records
+        .filter(r => new Date(r.timestamp) >= since)
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+      // 統計
+      const totalCount  = recent.length;
+      const avgIntensity = totalCount
+        ? (recent.reduce((s, r) => s + r.intensity, 0) / totalCount).toFixed(1)
+        : 0;
+      const medCount = recent.filter(r => r.medication?.taken).length;
+
+      // トリガー集計
+      const trigMap = {};
+      recent.forEach(r => (r.triggers||[]).forEach(t => { trigMap[t] = (trigMap[t]||0)+1; }));
+      const topTriggers = Object.entries(trigMap)
+        .sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k}(${v}回)`).join('、') || '—';
+
+      // テーブル行
+      const rows = recent.slice(-30).reverse().map(r => {
+        const d = new Date(r.timestamp);
+        const date = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        const med  = r.medication?.taken ? `${r.medication.name||'薬'} ${r.medication.count}錠` : '—';
+        return `<tr>
+          <td>${date}</td>
+          <td style="text-align:center;font-weight:bold;">${r.intensity}</td>
+          <td>${(r.location||[]).join('・')}</td>
+          <td>${(r.symptoms||[]).join('・')||'—'}</td>
+          <td>${(r.triggers||[]).join('・')||'—'}</td>
+          <td>${med}</td>
+        </tr>`;
+      }).join('');
+
+      document.getElementById('print-report').innerHTML = `
+        <div class="pr-title">174° 頭痛記録レポート</div>
+        <div class="pr-meta">
+          氏名: ${name}　／　出力日: ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日　／　対象期間: 直近90日間
+        </div>
+
+        <div class="pr-section">
+          <div class="pr-section-title">サマリー</div>
+          <div class="pr-stat-grid">
+            <div class="pr-stat">
+              <div class="pr-stat-num">${totalCount}</div>
+              <div class="pr-stat-label">頭痛回数</div>
+            </div>
+            <div class="pr-stat">
+              <div class="pr-stat-num">${avgIntensity}</div>
+              <div class="pr-stat-label">平均強度（/10）</div>
+            </div>
+            <div class="pr-stat">
+              <div class="pr-stat-num">${medCount}</div>
+              <div class="pr-stat-label">服薬回数</div>
+            </div>
+            <div class="pr-stat">
+              <div class="pr-stat-num">${Math.round(medCount/3)}</div>
+              <div class="pr-stat-label">月平均服薬</div>
+            </div>
+          </div>
+          <div style="font-size:9pt;color:#555;">主なトリガー: ${topTriggers}</div>
+        </div>
+
+        <div class="pr-section">
+          <div class="pr-section-title">頭痛記録一覧（直近30件）</div>
+          <table class="pr-table">
+            <thead>
+              <tr>
+                <th>日時</th><th>強度</th><th>場所</th><th>症状</th><th>トリガー</th><th>服薬</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+
+        <div class="pr-footer">
+          このレポートは 174°（頭痛管理アプリ）が自動生成したものです。診断・治療の根拠として使用する場合は医師にご相談ください。
+        </div>
+      `;
+      document.getElementById('print-report').style.display = 'block';
+      window.print();
+      document.getElementById('print-report').style.display = 'none';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7C6FAF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="images/icons/icon.svg">
+  <title>カレンダー — 174°</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* 月切替ヘッダー */
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+    }
+    .month-nav-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-primary);
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .month-nav-btn:active { transform: scale(0.92); background: var(--color-primary-light); }
+    .month-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem;
+      color: var(--color-text);
+      letter-spacing: 0.02em;
+    }
+
+    /* カレンダーグリッド */
+    .calendar-wrap {
+      padding: 0 12px;
+      margin-bottom: 16px;
+    }
+    .cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 4px;
+    }
+    .cal-weekday {
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      padding: 4px 0;
+    }
+    .cal-weekday:first-child { color: #D97B7B; }
+    .cal-weekday:last-child  { color: #7C9FBF; }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+    .cal-cell {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cal-cell:active { background: var(--color-primary-light); }
+    .cal-cell.empty { cursor: default; }
+    .cal-cell.today .cal-day {
+      background: var(--color-primary);
+      color: #fff;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cal-day {
+      font-size: 0.85rem;
+      font-weight: 500;
+      line-height: 1;
+      color: var(--color-text);
+    }
+    .cal-cell.sunday .cal-day  { color: #D97B7B; }
+    .cal-cell.saturday .cal-day { color: #7C9FBF; }
+    .cal-cell.other-month .cal-day { color: var(--color-border); }
+
+    /* 頭痛マーカー */
+    .pain-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .med-dot {
+      font-size: 0.55rem;
+      line-height: 1;
+      margin-top: 1px;
+    }
+
+    /* 服薬警告バナー */
+    .med-warning-banner {
+      display: none;
+      background: #FFF5D6;
+      border: 1px solid var(--color-warning);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      margin: 0 12px 12px;
+      font-size: 0.875rem;
+      color: #8A6800;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .med-warning-banner.visible { display: flex; }
+
+    /* 服薬リスト */
+    .med-list-section {
+      padding: 0 12px;
+    }
+    .med-list-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+    .med-list-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--color-surface);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      box-shadow: var(--shadow-card);
+    }
+    .med-list-icon { font-size: 1.2rem; }
+    .med-list-info { flex: 1; }
+    .med-list-date { font-size: 0.75rem; color: var(--color-text-muted); }
+    .med-list-name { font-size: 0.95rem; font-weight: 500; }
+    .med-list-count {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      background: var(--color-primary-light);
+      padding: 3px 8px;
+      border-radius: 100px;
+    }
+
+    .no-records {
+      text-align: center;
+      padding: 32px 20px;
+      color: var(--color-text-muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <a href="index.html" class="logo">174°</a>
+    <div class="header-actions">
+      <button class="icon-btn" aria-label="通知">🔔</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <!-- 月切替 -->
+    <div class="month-nav">
+      <button class="month-nav-btn" id="btn-prev-month" aria-label="前の月">‹</button>
+      <span class="month-title" id="month-title"></span>
+      <button class="month-nav-btn" id="btn-next-month" aria-label="次の月">›</button>
+    </div>
+
+    <!-- カレンダー -->
+    <div class="calendar-wrap">
+      <div class="cal-weekdays">
+        <div class="cal-weekday">日</div>
+        <div class="cal-weekday">月</div>
+        <div class="cal-weekday">火</div>
+        <div class="cal-weekday">水</div>
+        <div class="cal-weekday">木</div>
+        <div class="cal-weekday">金</div>
+        <div class="cal-weekday">土</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+
+    <!-- 薬物乱用警告バナー -->
+    <div class="med-warning-banner" id="med-warning">
+      <span>⚠️</span>
+      <span id="med-warning-text"></span>
+    </div>
+
+    <!-- 服薬記録リスト -->
+    <div class="med-list-section">
+      <div class="med-list-title">今月の服薬記録</div>
+      <div id="med-list"></div>
+    </div>
+  </div>
+
+  <!-- ボトムナビ -->
+  <nav class="bottom-nav" aria-label="メインナビゲーション">
+    <a href="index.html" class="nav-item" aria-label="ホーム">
+      <span class="nav-icon">🏠</span><span>ホーム</span>
+    </a>
+    <a href="calendar.html" class="nav-item active" aria-label="カレンダー">
+      <span class="nav-icon">📅</span><span>カレンダー</span>
+    </a>
+    <a href="record.html" class="nav-item nav-record" aria-label="記録する">
+      <span class="nav-icon">✏️</span><span>記録</span>
+    </a>
+    <a href="analysis.html" class="nav-item" aria-label="分析">
+      <span class="nav-icon">📊</span><span>分析</span>
+    </a>
+    <a href="settings.html" class="nav-item" aria-label="設定">
+      <span class="nav-icon">⚙️</span><span>設定</span>
+    </a>
+  </nav>
+
+  <script src="js/app.js"></script>
+  <script>
+    let viewYear  = new Date().getFullYear();
+    let viewMonth = new Date().getMonth();
+
+    function intensityToCal(n) {
+      if (n <= 3) return '#C8BEEA';
+      if (n <= 6) return '#9B8BBF';
+      return '#7C3F8E';
+    }
+
+    function renderCalendar() {
+      const records = APP.getRecords();
+      const now = new Date();
+      document.getElementById('month-title').textContent =
+        `${viewYear}年${viewMonth + 1}月`;
+
+      // 当月の記録をマップ（日 → 記録[]）
+      const dayMap = {};
+      records.forEach(r => {
+        const d = new Date(r.timestamp);
+        if (d.getFullYear() === viewYear && d.getMonth() === viewMonth) {
+          const key = d.getDate();
+          if (!dayMap[key]) dayMap[key] = [];
+          dayMap[key].push(r);
+        }
+      });
+
+      const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+      const lastDate = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+      const grid = document.getElementById('cal-grid');
+      grid.innerHTML = '';
+
+      // 前月の空白
+      for (let i = 0; i < firstDay; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell empty';
+        grid.appendChild(cell);
+      }
+
+      for (let date = 1; date <= lastDate; date++) {
+        const cell = document.createElement('div');
+        const dow = new Date(viewYear, viewMonth, date).getDay();
+        let cls = 'cal-cell';
+        if (dow === 0) cls += ' sunday';
+        if (dow === 6) cls += ' saturday';
+        if (viewYear === now.getFullYear() && viewMonth === now.getMonth() && date === now.getDate()) {
+          cls += ' today';
+        }
+        cell.className = cls;
+
+        const dayEl = document.createElement('div');
+        dayEl.className = 'cal-day';
+        dayEl.textContent = date;
+        cell.appendChild(dayEl);
+
+        const recs = dayMap[date];
+        if (recs && recs.length > 0) {
+          const maxInt = Math.max(...recs.map(r => r.intensity));
+          const dot = document.createElement('div');
+          dot.className = 'pain-dot';
+          dot.style.background = intensityToCal(maxInt);
+          cell.appendChild(dot);
+
+          const hasMed = recs.some(r => r.medication && r.medication.taken);
+          if (hasMed) {
+            const mdot = document.createElement('div');
+            mdot.className = 'med-dot';
+            mdot.textContent = '💊';
+            cell.appendChild(mdot);
+          }
+        }
+
+        grid.appendChild(cell);
+      }
+
+      renderMedList(records, dayMap);
+    }
+
+    function renderMedList(records, dayMap) {
+      const medRecords = records.filter(r => {
+        const d = new Date(r.timestamp);
+        return d.getFullYear() === viewYear && d.getMonth() === viewMonth
+          && r.medication && r.medication.taken;
+      });
+
+      // 薬物乱用警告
+      const warning = document.getElementById('med-warning');
+      const warningText = document.getElementById('med-warning-text');
+      if (medRecords.length >= 15) {
+        warning.classList.add('visible');
+        warningText.textContent = `今月の服薬回数が ${medRecords.length} 回に達しています。月15回以上の服薬は薬物乱用頭痛のリスクがあります。医師への相談をご検討ください。`;
+      } else {
+        warning.classList.remove('visible');
+      }
+
+      const list = document.getElementById('med-list');
+      if (medRecords.length === 0) {
+        list.innerHTML = '<div class="no-records">今月の服薬記録はありません</div>';
+        return;
+      }
+      list.innerHTML = '';
+      medRecords.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      medRecords.forEach(r => {
+        const item = document.createElement('div');
+        item.className = 'med-list-item';
+        const d = new Date(r.timestamp);
+        item.innerHTML = `
+          <span class="med-list-icon">💊</span>
+          <div class="med-list-info">
+            <div class="med-list-date">${APP.formatDateTime(d)}</div>
+            <div class="med-list-name">${r.medication.name || '（名前未入力）'}</div>
+          </div>
+          <span class="med-list-count">${r.medication.count}錠</span>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    document.getElementById('btn-prev-month').addEventListener('click', () => {
+      viewMonth--;
+      if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+      renderCalendar();
+    });
+    document.getElementById('btn-next-month').addEventListener('click', () => {
+      viewMonth++;
+      if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+      renderCalendar();
+    });
+
+    document.addEventListener('DOMContentLoaded', renderCalendar);
+  </script>
+</body>
+</html>

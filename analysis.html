@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7C6FAF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="images/icons/icon.svg">
+  <title>分析 — 174°</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .chart-card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 12px;
+    }
+    .chart-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 4px;
+    }
+    .chart-sub {
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+      margin-bottom: 16px;
+    }
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    /* 月次サマリー */
+    .summary-card {
+      background: linear-gradient(135deg, var(--color-primary-light) 0%, #FAF8FF 100%);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 12px;
+    }
+    .summary-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .summary-big {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.4rem;
+      color: var(--color-primary);
+      line-height: 1;
+    }
+    .summary-unit { font-size: 0.9rem; color: var(--color-text-muted); }
+    .summary-change {
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 100px;
+    }
+    .change-good { background: #E4F5EC; color: #3A8A5B; }
+    .change-bad  { background: #FFE8E8; color: #C04A4A; }
+    .change-same { background: var(--color-border); color: var(--color-text-muted); }
+    .summary-praise {
+      font-size: 0.875rem;
+      color: var(--color-primary-dark);
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    /* トリガーランキング */
+    .trigger-rank {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .trigger-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .trigger-rank-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      color: var(--color-text-muted);
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .trigger-rank-num.top { color: var(--color-primary); }
+    .trigger-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      width: 72px;
+      flex-shrink: 0;
+    }
+    .trigger-bar-wrap {
+      flex: 1;
+      height: 10px;
+      background: var(--color-primary-light);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .trigger-bar {
+      height: 100%;
+      border-radius: 100px;
+      background: var(--color-primary);
+      transition: width 0.6s ease;
+    }
+    .trigger-bar.top { background: linear-gradient(90deg, var(--color-primary), var(--color-accent)); }
+    .trigger-count {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      width: 28px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .summary-card {
+        background: linear-gradient(135deg, #2D2640 0%, #1E1A2E 100%);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <a href="index.html" class="logo">174°</a>
+    <div class="header-actions">
+      <button class="icon-btn" aria-label="通知">🔔</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <div class="page-title-bar">
+      <h1>分析</h1>
+      <div class="subtitle">頭痛のパターンを把握しましょう</div>
+    </div>
+
+    <div class="container">
+
+      <!-- ① 月次サマリー -->
+      <div class="summary-card">
+        <div class="summary-row">
+          <span class="summary-big" id="monthly-count">0</span>
+          <span class="summary-unit">回 / 今月</span>
+          <span class="summary-change" id="monthly-change"></span>
+        </div>
+        <div class="text-muted" style="font-size:0.8rem;">先月: <span id="last-month-count">0</span>回</div>
+        <div class="summary-praise" id="summary-praise"></div>
+      </div>
+
+      <!-- ② トリガー分析 -->
+      <div class="chart-card">
+        <div class="chart-title">トリガー分析</div>
+        <div class="chart-sub">頭痛と重なった回数（上位）</div>
+        <div class="trigger-rank" id="trigger-rank"></div>
+        <div class="chart-wrap mt-16" style="height:200px;">
+          <canvas id="trigger-chart" aria-label="トリガー横棒グラフ" role="img"></canvas>
+        </div>
+      </div>
+
+      <!-- ③ 強度推移グラフ -->
+      <div class="chart-card">
+        <div class="chart-title">強度の推移</div>
+        <div class="chart-sub">過去30日間の頭痛強度</div>
+        <div class="chart-wrap" style="height:180px;">
+          <canvas id="intensity-chart" aria-label="強度推移折れ線グラフ" role="img"></canvas>
+        </div>
+      </div>
+
+      <!-- ④ AIインサイト -->
+      <div class="ai-card">
+        <div class="ai-label">AI インサイト</div>
+        <div class="ai-text" id="ai-insight-1">分析中…</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-label">AI インサイト</div>
+        <div class="ai-text" id="ai-insight-2">分析中…</div>
+      </div>
+
+      <!-- ⑤ 気圧と頭痛の相関グラフ -->
+      <div class="chart-card">
+        <div class="chart-title">気圧 × 頭痛強度の相関</div>
+        <div class="chart-sub" id="corr-sub">過去30日間（気圧データ蓄積中）</div>
+        <div class="chart-wrap" style="height:180px;">
+          <canvas id="correlation-chart" aria-label="気圧と頭痛強度の相関グラフ" role="img"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ボトムナビ -->
+  <nav class="bottom-nav" aria-label="メインナビゲーション">
+    <a href="index.html" class="nav-item" aria-label="ホーム">
+      <span class="nav-icon">🏠</span><span>ホーム</span>
+    </a>
+    <a href="calendar.html" class="nav-item" aria-label="カレンダー">
+      <span class="nav-icon">📅</span><span>カレンダー</span>
+    </a>
+    <a href="record.html" class="nav-item nav-record" aria-label="記録する">
+      <span class="nav-icon">✏️</span><span>記録</span>
+    </a>
+    <a href="analysis.html" class="nav-item active" aria-label="分析">
+      <span class="nav-icon">📊</span><span>分析</span>
+    </a>
+    <a href="settings.html" class="nav-item" aria-label="設定">
+      <span class="nav-icon">⚙️</span><span>設定</span>
+    </a>
+  </nav>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Chart.js グローバル設定
+    Chart.defaults.font.family = "'Noto Sans JP', sans-serif";
+    Chart.defaults.color = getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-text-muted').trim() || '#888';
+
+    const PRIMARY = '#7C6FAF';
+    const ACCENT  = '#E8A598';
+    const LIGHT   = '#EDE9F8';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const records = APP.getRecords();
+      const now = new Date();
+
+      /* ---- 月次カウント ---- */
+      function countMonth(y, m) {
+        return records.filter(r => {
+          const d = new Date(r.timestamp);
+          return d.getFullYear() === y && d.getMonth() === m;
+        }).length;
+      }
+      const thisCount = countMonth(now.getFullYear(), now.getMonth());
+      const lastMonth = now.getMonth() === 0
+        ? { y: now.getFullYear()-1, m: 11 }
+        : { y: now.getFullYear(), m: now.getMonth()-1 };
+      const lastCount = countMonth(lastMonth.y, lastMonth.m);
+      const diff = thisCount - lastCount;
+
+      document.getElementById('monthly-count').textContent = thisCount;
+      document.getElementById('last-month-count').textContent = lastCount;
+
+      const changeEl = document.getElementById('monthly-change');
+      if (diff < 0) {
+        changeEl.textContent = `先月比 ${diff}回 ↓`;
+        changeEl.className = 'summary-change change-good';
+        document.getElementById('summary-praise').textContent = '先月より減っています！素晴らしいです ✨';
+      } else if (diff > 0) {
+        changeEl.textContent = `先月比 +${diff}回 ↑`;
+        changeEl.className = 'summary-change change-bad';
+        document.getElementById('summary-praise').textContent = '少し増えています。無理せず過ごしましょう。';
+      } else {
+        changeEl.textContent = '先月と同じ';
+        changeEl.className = 'summary-change change-same';
+        document.getElementById('summary-praise').textContent = '先月と同じペースです。';
+      }
+
+      /* ---- トリガー集計 ---- */
+      const triggerMap = {};
+      records.forEach(r => {
+        (r.triggers || []).forEach(t => {
+          triggerMap[t] = (triggerMap[t] || 0) + 1;
+        });
+      });
+      const sorted = Object.entries(triggerMap).sort((a,b) => b[1]-a[1]);
+      const top = sorted.slice(0, 6);
+      const maxVal = top.length > 0 ? top[0][1] : 1;
+
+      // ランキング表示
+      const rankEl = document.getElementById('trigger-rank');
+      top.slice(0,3).forEach(([name, count], i) => {
+        const row = document.createElement('div');
+        row.className = 'trigger-row';
+        row.innerHTML = `
+          <span class="trigger-rank-num ${i<3?'top':''}">${i+1}</span>
+          <span class="trigger-name">${name}</span>
+          <div class="trigger-bar-wrap">
+            <div class="trigger-bar ${i<3?'top':''}" style="width:${(count/maxVal*100).toFixed(0)}%"></div>
+          </div>
+          <span class="trigger-count">${count}回</span>
+        `;
+        rankEl.appendChild(row);
+      });
+
+      /* ---- 横棒グラフ ---- */
+      if (top.length > 0) {
+        new Chart(document.getElementById('trigger-chart'), {
+          type: 'bar',
+          data: {
+            labels: top.map(([n]) => n),
+            datasets: [{
+              data: top.map(([,v]) => v),
+              backgroundColor: top.map((_, i) => i < 3 ? PRIMARY : LIGHT),
+              borderRadius: 6,
+              borderSkipped: false,
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { precision: 0 } },
+              y: { grid: { display: false } }
+            }
+          }
+        });
+      }
+
+      /* ---- 強度推移グラフ ---- */
+      const analysisDays = APP.analysisDays();
+      // 分析日数をUIに反映
+      document.querySelectorAll('.chart-sub').forEach(el => {
+        el.textContent = el.textContent.replace('過去30日間', `過去${analysisDays}日間`);
+      });
+      if (!APP.isPremium()) {
+        // 無料ユーザーへのアップグレード誘導バナー
+        const banner = document.createElement('div');
+        banner.style.cssText = 'background:var(--color-primary-light);border:1.5px solid var(--color-primary);border-radius:var(--radius-sm);padding:12px 16px;margin:0 0 16px;display:flex;align-items:center;gap:12px;';
+        banner.innerHTML = `<span style="font-size:1.3rem;">✨</span><div style="flex:1"><div style="font-weight:700;font-size:0.88rem;color:var(--color-primary-dark);">プレミアムで90日分析が可能</div><div style="font-size:0.78rem;color:var(--color-text-muted);">現在は30日間表示。¥174/月でより深い分析を。</div></div><a href="settings.html" style="font-size:0.8rem;color:var(--color-primary);font-weight:700;white-space:nowrap;text-decoration:none;">今すぐ›</a>`;
+        document.querySelector('.container').prepend(banner);
+      }
+      const past30 = [];
+      const labels30 = [];
+      for (let i = analysisDays - 1; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const key = `${d.getMonth()+1}/${d.getDate()}`;
+        const step = analysisDays > 30 ? 10 : 5;
+        labels30.push(i % step === 0 ? key : '');
+        const dayRecs = records.filter(r => {
+          const rd = new Date(r.timestamp);
+          return rd.getFullYear() === d.getFullYear()
+            && rd.getMonth() === d.getMonth()
+            && rd.getDate() === d.getDate();
+        });
+        past30.push(dayRecs.length > 0 ? Math.max(...dayRecs.map(r => r.intensity)) : null);
+      }
+
+      new Chart(document.getElementById('intensity-chart'), {
+        type: 'line',
+        data: {
+          labels: labels30,
+          datasets: [{
+            data: past30,
+            borderColor: PRIMARY,
+            backgroundColor: 'rgba(124,111,175,0.12)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: past30.map(v => v !== null ? 4 : 0),
+            pointBackgroundColor: PRIMARY,
+            spanGaps: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              min: 0, max: 10,
+              grid: { color: 'rgba(0,0,0,0.04)' },
+              ticks: { stepSize: 2 }
+            },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+
+      /* ---- AIインサイト ---- */
+      const insights = APP.generateInsights(2);
+      document.getElementById('ai-insight-1').textContent = insights[0] || '';
+      document.getElementById('ai-insight-2').textContent = insights[1] || '';
+
+      /* ---- 気圧×頭痛 相関グラフ（実データ優先） ---- */
+      const corrLabels = [];
+      const pressureData = [];
+      const intensityData = [];
+      let realPressureDays = 0;
+
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        corrLabels.push(i % 5 === 0 ? `${d.getMonth()+1}/${d.getDate()}` : '');
+
+        // localStorage から日次スナップショットを取得
+        const dateKey = d.toISOString().slice(0, 10);
+        const stored  = localStorage.getItem('174_p_' + dateKey);
+        if (stored !== null) {
+          pressureData.push(Number(stored));
+          realPressureDays++;
+        } else {
+          pressureData.push(null);
+        }
+
+        const dayRecs = records.filter(r => {
+          const rd = new Date(r.timestamp);
+          return rd.getFullYear() === d.getFullYear()
+            && rd.getMonth()      === d.getMonth()
+            && rd.getDate()       === d.getDate();
+        });
+        intensityData.push(dayRecs.length > 0 ? Math.max(...dayRecs.map(r => r.intensity)) : null);
+      }
+
+      // サブタイトルを実データ数で更新
+      const corrSubEl = document.getElementById('corr-sub');
+      if (realPressureDays >= 7) {
+        corrSubEl.textContent = `過去30日間（気圧: 実測${realPressureDays}日分）`;
+      } else if (realPressureDays > 0) {
+        corrSubEl.textContent = `過去30日間（気圧: 実測${realPressureDays}日分・蓄積中）`;
+      } else {
+        corrSubEl.textContent = '過去30日間（ホーム画面を開くたびに気圧データが蓄積されます）';
+      }
+
+      new Chart(document.getElementById('correlation-chart'), {
+        type: 'line',
+        data: {
+          labels: corrLabels,
+          datasets: [
+            {
+              label: '気圧 (hPa)',
+              data: pressureData,
+              borderColor: '#7BAFC8',
+              backgroundColor: 'rgba(123,175,200,0.1)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 0,
+              yAxisID: 'y1',
+            },
+            {
+              label: '頭痛強度',
+              data: intensityData,
+              borderColor: ACCENT,
+              backgroundColor: 'rgba(232,165,152,0.15)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: intensityData.map(v => v !== null ? 4 : 0),
+              pointBackgroundColor: ACCENT,
+              spanGaps: false,
+              yAxisID: 'y2',
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: { boxWidth: 12, padding: 12 }
+            }
+          },
+          scales: {
+            y1: {
+              position: 'left',
+              grid: { color: 'rgba(0,0,0,0.04)' },
+              ticks: { callback: v => v.toFixed(0) },
+              title: { display: false }
+            },
+            y2: {
+              position: 'right',
+              min: 0, max: 10,
+              grid: { display: false },
+              ticks: { stepSize: 2 }
+            },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

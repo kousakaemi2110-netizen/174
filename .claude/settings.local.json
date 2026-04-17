@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where npx:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(wc -l /c/Users/kskem/ドキュメント/04サイト/174/*.html)",
+      "Bash(grep -n \"console.log\\\\|alert\\\\|return;\\\\|stub\\\\|TODO\\\\|FIXME\\\\|未\\\\|実装\" /c/Users/kskem/ドキュメント/04サイト/174/*.html)",
+      "mcp__bc838d90-e6a1-4934-aa42-661f336421e2__accounts_list",
+      "mcp__bc838d90-e6a1-4934-aa42-661f336421e2__d1_databases_list",
+      "mcp__bc838d90-e6a1-4934-aa42-661f336421e2__workers_list",
+      "Bash(npx wrangler:*)",
+      "mcp__bc838d90-e6a1-4934-aa42-661f336421e2__d1_database_create",
+      "mcp__bc838d90-e6a1-4934-aa42-661f336421e2__d1_database_query",
+      "Bash(openssl rand:*)",
+      "Bash(echo \"174-headache-jwt-secret-$\\(openssl rand -hex 16\\)\")",
+      "Bash(curl -s -X POST https://174-api.kousakaemi2110.workers.dev/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"test@example.com\",\"password\":\"test123\",\"nickname\":\"テスト\"}')",
+      "Bash(curl -s -X POST https://174-api.kousakaemi2110.workers.dev/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"test@example.com\",\"password\":\"test123\"}')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('ok:', d['ok'], 'records:', len\\(d['records']\\)\\)\")",
+      "Bash(curl -s -X POST https://174-api.kousakaemi2110.workers.dev/api/sync -H 'Content-Type: application/json' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjNTEyMTE5OC1hMDMxLTRjNGYtOTBmZC1mMDAyMDBkMDJmOGQiLCJpYXQiOjE3NzU5NTAwODgsImV4cCI6MTc3ODU0MjA4OH0.E5KKRCktTJZIlPGW3JdmVdNhsngxYhubZQIgEj62JMw' -d '{\"records\":[{\"id\":\"test-001\",\"timestamp\":\"2026-04-12T10:00:00Z\",\"intensity\":6,\"location\":[\"右側\"],\"symptoms\":[\"ズキズキ\"],\"triggers\":[\"ストレス\"],\"medication\":{\"taken\":true,\"name\":\"ロキソニン\",\"count\":1}}],\"settings\":{}}')",
+      "Bash(curl -sv -X GET https://174-api.kousakaemi2110.workers.dev/api/me -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjNTEyMTE5OC1hMDMxLTRjNGYtOTBmZC1mMDAyMDBkMDJmOGQiLCJpYXQiOjE3NzU5NTAwODgsImV4cCI6MTc3ODU0MjA4OH0.E5KKRCktTJZIlPGW3JdmVdNhsngxYhubZQIgEj62JMw')",
+      "Bash(curl -s -X POST https://174-api.kousakaemi2110.workers.dev/api/sync -H 'Content-Type: application/json' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjNTEyMTE5OC1hMDMxLTRjNGYtOTBmZC1mMDAyMDBkMDJmOGQiLCJpYXQiOjE3NzU5NTAwODgsImV4cCI6MTc3ODU0MjA4OH0.E5KKRCktTJZIlPGW3JdmVdNhsngxYhubZQIgEj62JMw' --data-raw '{\"records\":[{\"id\":\"test-001\",\"timestamp\":\"2026-04-12T10:00:00Z\",\"intensity\":6,\"location\":[],\"symptoms\":[],\"triggers\":[],\"medication\":{\"taken\":false,\"name\":\"\",\"count\":0}}],\"settings\":{}}')",
+      "Bash(curl -s -X POST https://174-api.kousakaemi2110.workers.dev/api/auth/forgot-password -H \"Content-Type: application/json\" -d \"{\\\\\"email\\\\\":\\\\\"test-nonexistent@example.com\\\\\"}\")",
+      "Bash(ls *.html)",
+      "mcp__bc838d90-e6a1-4934-aa42-661f336421e2__workers_get_worker",
+      "Bash(curl -s -X POST https://174-api.kousakaemi2110.workers.dev/api/auth/login -H \"Content-Type: application/json\" -d \"{\\\\\"email\\\\\":\\\\\"test@test.com\\\\\",\\\\\"password\\\\\":\\\\\"test123\\\\\"}\")",
+      "Bash(dir)",
+      "Bash(npx serve *)",
+      "Bash(curl -s http://localhost:3000)"
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "174° 頭痛管理",
+  "short_name": "174°",
+  "description": "頭痛を記録・分析して、より良い毎日へ",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FAFAF8",
+  "theme_color": "#7C6FAF",
+  "orientation": "portrait-primary",
+  "lang": "ja",
+  "categories": ["health", "lifestyle"],
+  "icons": [
+    {
+      "src": "images/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "images/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": []
+}

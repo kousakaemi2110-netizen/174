@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- maskable: safe zone は中心80%（51px padding相当）-->
+  <rect width="512" height="512" fill="#7C6FAF"/>
+  <text
+    x="256" y="295"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="138"
+    font-weight="700"
+    fill="#FFFFFF"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    letter-spacing="-2">174°</text>
+</svg>

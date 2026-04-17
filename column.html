@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7C6FAF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="images/icons/icon.svg">
+  <title>コラム — 174°</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* カテゴリタブ */
+    .category-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 12px 16px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .category-tabs::-webkit-scrollbar { display: none; }
+    .cat-tab {
+      flex-shrink: 0;
+      padding: 8px 16px;
+      border-radius: 100px;
+      border: 1.5px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+      font-size: 0.82rem;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      min-height: 36px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cat-tab:active { transform: scale(0.95); }
+    .cat-tab.active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+
+    /* 記事カード */
+    .article-list {
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .article-card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.12s, box-shadow 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      text-decoration: none;
+      color: var(--color-text);
+    }
+    .article-card:active {
+      transform: scale(0.98);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+    .article-thumb {
+      width: 100%;
+      height: 160px;
+      overflow: hidden;
+    }
+    .article-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s;
+    }
+    .article-card:active .article-thumb img {
+      transform: scale(1.03);
+    }
+    .article-body {
+      padding: 14px 16px 16px;
+      display: flex;
+      flex-direction: column;
+    }
+    .article-cat {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    .article-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 6px;
+    }
+    .article-desc {
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .article-meta {
+      font-size: 0.7rem;
+      color: var(--color-text-muted);
+      margin-top: 6px;
+    }
+
+    /* 記事モーダル */
+    .article-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--color-bg);
+      z-index: 600;
+      overflow-y: auto;
+      animation: fadeIn 0.2s ease;
+    }
+    .article-modal.open { display: block; }
+    .article-modal-header {
+      position: sticky;
+      top: 0;
+      background: var(--color-bg);
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+    }
+    .article-modal-close {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: var(--color-primary-light);
+      color: var(--color-primary);
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .article-modal-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .article-modal-hero {
+      width: 100%;
+      height: 200px;
+      overflow: hidden;
+    }
+    .article-modal-hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .article-modal-body {
+      padding: 20px 20px 100px;
+    }
+    .article-modal-body h2 {
+      font-size: 1.3rem;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    .article-modal-body p {
+      font-size: 0.92rem;
+      line-height: 1.8;
+      color: var(--color-text);
+      margin-bottom: 16px;
+    }
+    .article-modal-body h3 {
+      font-size: 1rem;
+      margin: 20px 0 8px;
+      color: var(--color-primary);
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <a href="index.html" class="logo">174°</a>
+    <div class="header-actions">
+      <button class="icon-btn" aria-label="通知">🔔</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <div class="page-title-bar">
+      <h1>コラム</h1>
+      <div class="subtitle">頭痛のことをもっと知ろう</div>
+    </div>
+
+    <!-- カテゴリタブ -->
+    <div class="category-tabs" role="tablist" aria-label="記事カテゴリ">
+      <button class="cat-tab active" data-cat="all" onclick="filterCat(this)" role="tab">すべて</button>
+      <button class="cat-tab" data-cat="migraine" onclick="filterCat(this)" role="tab">片頭痛</button>
+      <button class="cat-tab" data-cat="tension" onclick="filterCat(this)" role="tab">緊張型</button>
+      <button class="cat-tab" data-cat="pressure" onclick="filterCat(this)" role="tab">気圧頭痛</button>
+      <button class="cat-tab" data-cat="hormone" onclick="filterCat(this)" role="tab">ホルモン</button>
+      <button class="cat-tab" data-cat="medicine" onclick="filterCat(this)" role="tab">薬について</button>
+    </div>
+
+    <!-- 記事リスト -->
+    <div class="article-list" id="article-list"></div>
+  </div>
+
+  <!-- 記事モーダル -->
+  <div class="article-modal" id="article-modal" role="dialog" aria-modal="true">
+    <div class="article-modal-header">
+      <button class="article-modal-close" onclick="closeArticle()" aria-label="閉じる">✕</button>
+      <div class="article-modal-title" id="modal-title-header"></div>
+    </div>
+    <div class="article-modal-hero" id="modal-hero" aria-hidden="true"></div>
+    <div class="article-modal-body" id="modal-body"></div>
+  </div>
+
+  <!-- ボトムナビ -->
+  <nav class="bottom-nav" aria-label="メインナビゲーション">
+    <a href="index.html" class="nav-item" aria-label="ホーム">
+      <span class="nav-icon">🏠</span><span>ホーム</span>
+    </a>
+    <a href="calendar.html" class="nav-item" aria-label="カレンダー">
+      <span class="nav-icon">📅</span><span>カレンダー</span>
+    </a>
+    <a href="record.html" class="nav-item nav-record" aria-label="記録する">
+      <span class="nav-icon">✏️</span><span>記録</span>
+    </a>
+    <a href="analysis.html" class="nav-item" aria-label="分析">
+      <span class="nav-icon">📊</span><span>分析</span>
+    </a>
+    <a href="settings.html" class="nav-item" aria-label="設定">
+      <span class="nav-icon">⚙️</span><span>設定</span>
+    </a>
+  </nav>
+
+  <script src="js/app.js"></script>
+  <script>
+    const ARTICLES = [
+      {
+        id: 1, cat: 'migraine',
+        image: 'images/articles/article-01-migraine-type.png',
+        title: '片頭痛と緊張型頭痛の見分け方',
+        desc: '似ているようで全然違う2つの頭痛。正しく見分けることで適切なケアができます。',
+        date: '2025年5月',
+        body: `
+          <h2>片頭痛と緊張型頭痛の見分け方</h2>
+          <p>頭痛には大きく分けて「片頭痛」「緊張型頭痛」「群発頭痛」の3種類があります。中でも日常生活に影響を与えやすいのが片頭痛と緊張型頭痛です。</p>
+          <h3>片頭痛の特徴</h3>
+          <p>片頭痛はその名の通り、頭の片側（または両側）がズキズキと脈打つように痛むのが特徴です。吐き気・光や音への過敏さを伴うことも多く、動くと悪化します。数時間〜72時間続くことがあります。</p>
+          <h3>緊張型頭痛の特徴</h3>
+          <p>頭全体を締め付けられるような鈍い痛みが特徴です。肩こりや首のこりを伴うことが多く、光・音への過敏さはあまりありません。ストレスや長時間の同じ姿勢が原因になりやすいです。</p>
+          <h3>見分けるポイント</h3>
+          <p>「ズキズキ脈打つ」→片頭痛の可能性大。「締め付けられる感覚」→緊張型の可能性大。動いても変わらないなら緊張型、動くと悪化するなら片頭痛が疑われます。</p>
+        `
+      },
+      {
+        id: 2, cat: 'pressure',
+        image: 'images/articles/article-02-pressure.png',
+        title: '気圧が下がると頭痛になる理由',
+        desc: '天気が悪い日に頭痛がひどくなる…それには科学的な理由があります。',
+        date: '2025年5月',
+        body: `
+          <h2>気圧が下がると頭痛になる理由</h2>
+          <p>「雨の前になると頭痛がする」という経験はありませんか？これは気のせいではなく、気圧の変化が体に影響を与えているからです。</p>
+          <h3>気圧と血管の関係</h3>
+          <p>気圧が下がると、外から体を押さえる力が弱くなります。その結果、頭部の血管が拡張しやすくなり、周囲の神経を刺激して片頭痛を引き起こすと考えられています。</p>
+          <h3>内耳のセンサー</h3>
+          <p>人間の内耳には気圧を感知するセンサーがあります。気圧が急激に変化すると、このセンサーが過剰反応し、頭痛・めまい・吐き気を引き起こすことがあります。</p>
+          <h3>対策</h3>
+          <p>気圧変化を事前に把握して準備することが大切です。このアプリの気圧ウィジェットを活用し、急降下の前に早めに休息・水分補給・予防薬の服用を検討しましょう。</p>
+        `
+      },
+      {
+        id: 3, cat: 'migraine',
+        image: 'images/articles/article-03-magnesium.png',
+        title: 'マグネシウムが片頭痛に効く？',
+        desc: 'サプリメントの中でも特に注目されているマグネシウム。その効果と摂り方を解説します。',
+        date: '2025年4月',
+        body: `
+          <h2>マグネシウムが片頭痛に効く？</h2>
+          <p>片頭痛に悩む方の多くにマグネシウム不足が見られることが研究で示されており、補充によって頭痛の頻度が減ったという報告もあります。</p>
+          <h3>なぜマグネシウムが効くのか</h3>
+          <p>マグネシウムには血管の過剰な収縮・拡張を抑える働きがあります。また、神経の興奮を鎮めて頭痛のきっかけとなる「波（コルティカルスプレッティング）」を抑制するとも言われています。</p>
+          <h3>推奨摂取量と食品</h3>
+          <p>成人女性の推奨摂取量は1日約270mg。ナッツ類・豆腐・ほうれん草・バナナなどに豊富に含まれています。不足しがちな場合はサプリで補うのもひとつの選択肢です。</p>
+          <h3>注意点</h3>
+          <p>サプリメントを始める前に、持病や服薬中の薬との相互作用について医師に相談することをおすすめします。</p>
+        `
+      },
+      {
+        id: 4, cat: 'medicine',
+        image: 'images/articles/article-04-overuse.png',
+        title: '市販薬の飲みすぎが頭痛を悪化させる仕組み',
+        desc: '鎮痛剤に頼りすぎていませんか？薬物乱用頭痛（MOH）について知っておきましょう。',
+        date: '2025年4月',
+        body: `
+          <h2>市販薬の飲みすぎが頭痛を悪化させる仕組み</h2>
+          <p>頭痛がひどくて鎮痛剤を頻繁に飲んでいると、逆に頭痛が慢性化することがあります。これを「薬物乱用頭痛（MOH: Medication Overuse Headache）」と言います。</p>
+          <h3>どのくらいで起こるのか</h3>
+          <p>鎮痛剤を月に15日以上、3ヶ月以上服用すると薬物乱用頭痛のリスクが高まります。トリプタン系薬は月10日以上で注意が必要です。</p>
+          <h3>メカニズム</h3>
+          <p>薬を飲み続けると脳の痛みを感じる閾値が下がり、少しの刺激でも強く痛みを感じるようになります。そのため「薬が切れると頭痛がする」という悪循環に陥りがちです。</p>
+          <h3>対策</h3>
+          <p>月15回を超えたらアプリが警告を出します。気になる場合は頭痛専門医に相談しましょう。予防薬の処方で改善するケースが多くあります。</p>
+        `
+      },
+      {
+        id: 5, cat: 'hormone',
+        image: 'images/articles/article-05-hormone.png',
+        title: '生理前の頭痛、ホルモンとの関係',
+        desc: '月経前に頭痛がひどくなる方へ。エストロゲンと頭痛の密接な関係を解説。',
+        date: '2025年3月',
+        body: `
+          <h2>生理前の頭痛、ホルモンとの関係</h2>
+          <p>女性の片頭痛患者の約半数が、生理の前後に頭痛が悪化することを経験しています。これには女性ホルモン「エストロゲン」が深く関係しています。</p>
+          <h3>エストロゲンの変動と頭痛</h3>
+          <p>月経前2〜3日頃にエストロゲンが急激に低下します。この変動が脳内のセロトニンバランスを乱し、片頭痛を引き起こすと考えられています。</p>
+          <h3>月経関連片頭痛の特徴</h3>
+          <p>通常の片頭痛より痛みが強く、持続時間が長い傾向があります。また、鎮痛剤が効きにくいことも特徴のひとつです。</p>
+          <h3>対処法</h3>
+          <p>生理周期を記録してパターンを把握することが第一歩。このアプリの設定で生理周期を登録すると、頭痛との相関を確認できます。頭痛がひどい場合は婦人科や頭痛外来への相談もご検討ください。</p>
+        `
+      },
+      {
+        id: 6, cat: 'migraine',
+        image: 'images/articles/article-06-prevention.png',
+        title: '今日からできる頭痛予防習慣5選',
+        desc: '日々の小さな習慣が慢性頭痛を減らす鍵。すぐに始められる5つのことをご紹介。',
+        date: '2025年3月',
+        body: `
+          <h2>今日からできる頭痛予防習慣5選</h2>
+          <p>頭痛は「なってから対処」より「なる前に予防」が重要です。日常に取り入れやすい習慣を5つご紹介します。</p>
+          <h3>1. 毎日同じ時間に起きる</h3>
+          <p>睡眠のリズムが崩れると片頭痛が起きやすくなります。週末も平日と同じ起床時間を心がけましょう。</p>
+          <h3>2. こまめな水分補給</h3>
+          <p>脱水は頭痛の大きな誘因です。1日1.5〜2Lを目標に、こまめに水を飲む習慣をつけましょう。</p>
+          <h3>3. 食事を抜かない</h3>
+          <p>低血糖が頭痛を引き起こすことがあります。特に朝食は欠かさずに。チョコレートや赤ワインは誘因になる方もいます。</p>
+          <h3>4. 首・肩のストレッチ</h3>
+          <p>筋肉の緊張が頭痛につながります。1時間に一度、首・肩を動かすだけで効果があります。</p>
+          <h3>5. 頭痛日記をつける</h3>
+          <p>記録することでパターンが見えてきます。このアプリを使って毎日記録する習慣をつけましょう！</p>
+        `
+      }
+    ];
+
+    let currentCat = 'all';
+
+    function renderArticles() {
+      const list = document.getElementById('article-list');
+      const filtered = currentCat === 'all'
+        ? ARTICLES
+        : ARTICLES.filter(a => a.cat === currentCat);
+
+      list.innerHTML = '';
+      filtered.forEach(article => {
+        const card = document.createElement('div');
+        card.className = 'article-card';
+        card.setAttribute('role', 'article');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', article.title);
+        card.innerHTML = `
+          <div class="article-thumb">
+            <img src="${article.image}" alt="${article.title}のサムネイル">
+          </div>
+          <div class="article-body">
+            <div class="article-cat">${catLabel(article.cat)}</div>
+            <div class="article-title">${article.title}</div>
+            <div class="article-desc">${article.desc}</div>
+            <div class="article-meta">${article.date}</div>
+          </div>
+        `;
+        card.addEventListener('click', () => openArticle(article));
+        card.addEventListener('keydown', e => { if (e.key === 'Enter') openArticle(article); });
+        list.appendChild(card);
+      });
+    }
+
+    function catLabel(cat) {
+      const map = { migraine:'片頭痛', tension:'緊張型', pressure:'気圧頭痛', hormone:'ホルモン', medicine:'薬について' };
+      return map[cat] || '';
+    }
+
+    function filterCat(btn) {
+      document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      currentCat = btn.dataset.cat;
+      renderArticles();
+    }
+
+    function openArticle(article) {
+      document.getElementById('modal-title-header').textContent = article.title;
+      document.getElementById('modal-hero').innerHTML = `<img src="${article.image}" alt="${article.title}">`;
+      document.getElementById('modal-body').innerHTML = article.body;
+      document.getElementById('article-modal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeArticle() {
+      document.getElementById('article-modal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', renderArticles);
+  </script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7C6FAF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <title>ログイン — 174°</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px 60px;
+    }
+
+    .login-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 3rem;
+      color: var(--color-primary);
+      margin-bottom: 6px;
+      line-height: 1;
+    }
+
+    .login-tagline {
+      font-size: 0.82rem;
+      color: var(--color-text-muted);
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    .login-card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      padding: 28px 24px 32px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-tabs {
+      display: flex;
+      background: var(--color-primary-light);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      margin-bottom: 28px;
+      gap: 4px;
+    }
+
+    .login-tab {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .login-tab.active {
+      background: var(--color-surface);
+      color: var(--color-primary);
+      font-weight: 700;
+      box-shadow: var(--shadow-card);
+    }
+
+    .login-error {
+      display: none;
+      background: rgba(217, 123, 123, 0.12);
+      border: 1px solid var(--color-danger);
+      color: var(--color-danger);
+      font-size: 0.82rem;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .skip-link {
+      display: block;
+      text-align: center;
+      margin-top: 24px;
+      font-size: 0.82rem;
+      color: var(--color-text-muted);
+      text-decoration: none;
+    }
+    .skip-link span {
+      color: var(--color-primary);
+      text-decoration: underline;
+    }
+
+    .forgot-btn {
+      background: none;
+      border: none;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      padding: 4px 0;
+      display: block;
+      margin: -4px auto 0;
+      text-align: center;
+      width: 100%;
+    }
+    .forgot-btn:hover { color: var(--color-primary); }
+
+    .divider {
+      height: 1px;
+      background: var(--color-border);
+      margin: 20px 0;
+    }
+
+    .benefit-list {
+      list-style: none;
+      margin-bottom: 0;
+    }
+    .benefit-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.82rem;
+      color: var(--color-text-muted);
+      padding: 5px 0;
+    }
+    .benefit-list li::before {
+      content: '✓';
+      color: var(--color-success);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* パスワードリセット画面 */
+    .forgot-screen {
+      display: none;
+    }
+    .back-btn {
+      background: none;
+      border: none;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.85rem;
+      color: var(--color-primary);
+      cursor: pointer;
+      padding: 0;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-logo">174°</div>
+    <div class="login-tagline">あなた専用の頭痛管理アプリ</div>
+
+    <!-- メイン画面（ログイン／登録） -->
+    <div class="login-card" id="main-screen">
+      <!-- タブ切替 -->
+      <div class="login-tabs">
+        <button class="login-tab active" id="tab-login" onclick="switchTab('login')">ログイン</button>
+        <button class="login-tab" id="tab-register" onclick="switchTab('register')">新規登録</button>
+      </div>
+
+      <!-- エラー表示 -->
+      <div class="login-error" id="login-error"></div>
+
+      <!-- ニックネーム（登録時のみ） -->
+      <div class="form-group" id="row-nickname" style="display:none">
+        <label class="form-label">ニックネーム（任意）</label>
+        <input class="form-input" id="input-nickname" type="text" placeholder="例: はるか" maxlength="20">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">メールアドレス</label>
+        <input class="form-input" id="input-email" type="email" placeholder="example@email.com" autocomplete="email">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">パスワード（6文字以上）</label>
+        <input class="form-input" id="input-password" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <button class="btn btn-primary" id="submit-btn" onclick="submitAuth()">ログイン</button>
+
+      <button class="forgot-btn mt-8" id="forgot-link" onclick="showForgot()">
+        パスワードを忘れた方はこちら
+      </button>
+
+      <!-- 登録時のメリット表示 -->
+      <div id="benefits-section" style="display:none">
+        <div class="divider"></div>
+        <ul class="benefit-list">
+          <li>記録をクラウドに自動バックアップ</li>
+          <li>複数端末で同期できる</li>
+          <li>プレミアムプランでより詳細な分析</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- パスワードリセット画面 -->
+    <div class="login-card forgot-screen" id="forgot-screen">
+      <button class="back-btn" onclick="hideForgot()">← 戻る</button>
+      <div style="font-size:1.05rem;font-weight:700;margin-bottom:8px;">パスワードをリセット</div>
+      <p style="font-size:0.83rem;color:var(--color-text-muted);margin-bottom:20px;line-height:1.6;">
+        登録したメールアドレスを入力してください。<br>リセットリンクをお送りします。
+      </p>
+      <div class="login-error" id="forgot-error"></div>
+      <div id="forgot-success" style="display:none;background:rgba(125,191,158,0.12);border:1px solid var(--color-success);color:#5A9E7A;font-size:0.82rem;padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:16px;text-align:center;"></div>
+      <div class="form-group">
+        <label class="form-label">メールアドレス</label>
+        <input class="form-input" id="forgot-email" type="email" placeholder="example@email.com">
+      </div>
+      <button class="btn btn-primary" id="forgot-submit-btn" onclick="submitForgot()">送信する</button>
+    </div>
+
+    <!-- ログインせずに使う -->
+    <a href="index.html" class="skip-link">
+      ログインせずに使う<br>
+      <span style="font-size:0.75rem;">※クラウド同期・プレミアム機能は使えません</span>
+    </a>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    // ログイン済みならリダイレクト先へ（戻り先があればそこへ、なければhome）
+    if (APP.isLoggedIn()) {
+      const next = new URLSearchParams(location.search).get('next') || 'index.html';
+      location.replace(next);
+    }
+
+    let _mode = 'login';
+
+    function switchTab(mode) {
+      _mode = mode;
+      const isReg = mode === 'register';
+      document.getElementById('tab-login').classList.toggle('active', !isReg);
+      document.getElementById('tab-register').classList.toggle('active', isReg);
+      document.getElementById('row-nickname').style.display = isReg ? '' : 'none';
+      document.getElementById('benefits-section').style.display = isReg ? '' : 'none';
+      document.getElementById('forgot-link').style.display = isReg ? 'none' : '';
+      document.getElementById('submit-btn').textContent = isReg ? '登録する' : 'ログイン';
+      document.getElementById('input-password').setAttribute(
+        'autocomplete', isReg ? 'new-password' : 'current-password'
+      );
+      document.getElementById('login-error').style.display = 'none';
+    }
+
+    async function submitAuth() {
+      const email    = document.getElementById('input-email').value.trim();
+      const password = document.getElementById('input-password').value;
+      const nickname = document.getElementById('input-nickname').value.trim();
+      const errEl    = document.getElementById('login-error');
+      const btn      = document.getElementById('submit-btn');
+
+      errEl.style.display = 'none';
+      if (!email || !password) {
+        errEl.textContent = 'メールアドレスとパスワードを入力してください';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '処理中…';
+
+      try {
+        if (_mode === 'register') {
+          await APP.register(email, password, nickname);
+        } else {
+          await APP.login(email, password);
+        }
+        // ログイン後に同期してからリダイレクト
+        try { await APP.syncToCloud(); } catch (_) {}
+        const next = new URLSearchParams(location.search).get('next') || 'index.html';
+        location.href = next;
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = _mode === 'register' ? '登録する' : 'ログイン';
+      }
+    }
+
+    // Enterキーで送信
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && document.getElementById('main-screen').style.display !== 'none') {
+        submitAuth();
+      }
+    });
+
+    function showForgot() {
+      document.getElementById('main-screen').style.display = 'none';
+      document.getElementById('forgot-screen').style.display = 'block';
+    }
+    function hideForgot() {
+      document.getElementById('forgot-screen').style.display = 'none';
+      document.getElementById('main-screen').style.display = 'block';
+    }
+
+    async function submitForgot() {
+      const email  = document.getElementById('forgot-email').value.trim();
+      const errEl  = document.getElementById('forgot-error');
+      const sucEl  = document.getElementById('forgot-success');
+      const btn    = document.getElementById('forgot-submit-btn');
+      errEl.style.display = 'none';
+      sucEl.style.display = 'none';
+      if (!email) {
+        errEl.textContent = 'メールアドレスを入力してください';
+        errEl.style.display = 'block';
+        return;
+      }
+      btn.disabled = true; btn.textContent = '送信中…';
+      try {
+        await APP.apiRequest('/api/auth/forgot-password', {
+          method: 'POST',
+          body: JSON.stringify({ email }),
+        });
+        sucEl.textContent = 'リセットリンクを送信しました。メールをご確認ください。';
+        sucEl.style.display = 'block';
+        btn.textContent = '送信済み';
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = '送信する';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -531,19 +531,11 @@
         `;
       } else {
         el.innerHTML = `
-          <div class="settings-row tappable" onclick="openAuthModal('login')">
+          <div class="settings-row tappable" onclick="location.href='login.html?next=settings.html'">
             <span class="settings-row-icon">🔑</span>
             <div style="flex:1">
-              <div class="settings-row-label">ログイン</div>
+              <div class="settings-row-label">ログイン / 新規登録</div>
               <div class="settings-row-sub">データをクラウドにバックアップ・同期</div>
-            </div>
-            <span class="settings-chevron">›</span>
-          </div>
-          <div class="settings-row tappable" onclick="openAuthModal('register')">
-            <span class="settings-row-icon">✨</span>
-            <div style="flex:1">
-              <div class="settings-row-label">新規登録</div>
-              <div class="settings-row-sub">無料でアカウントを作成</div>
             </div>
             <span class="settings-chevron">›</span>
           </div>

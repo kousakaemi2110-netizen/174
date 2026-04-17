@@ -518,6 +518,12 @@ h1, h2, h3 {
 [data-theme="dark"] .ai-card {
   background: linear-gradient(135deg, #2D2640 0%, #1E1A2E 100%);
 }
+[data-theme="dark"] .ai-card .ai-label {
+  color: #B8AEDC;
+}
+[data-theme="dark"] .ai-card .ai-text {
+  color: #EDE9F8;
+}
 
 /* ==============================
    ページタイトル

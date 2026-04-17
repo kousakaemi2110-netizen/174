@@ -4,6 +4,8 @@
 
 const ALLOWED_ORIGINS = [
   'https://174-app.pages.dev',
+  'https://174care.com',
+  'https://www.174care.com',
   'http://localhost',
   'http://127.0.0.1',
 ];
@@ -450,6 +452,208 @@ async function activateSession(req, env) {
   return json({ ok: true, premium: true, premiumSince: s.premiumSince });
 }
 
+/* ==============================
+   Web Push (VAPID + RFC 8291)
+   ============================== */
+
+/** base64url → Uint8Array */
+function b64uDec(s) {
+  const p = s.replace(/-/g, '+').replace(/_/g, '/');
+  return Uint8Array.from(atob(p.padEnd(p.length + (4 - p.length % 4) % 4, '=')), c => c.charCodeAt(0));
+}
+/** Uint8Array → base64url */
+function b64uEnc(u8) {
+  return btoa(String.fromCharCode(...u8)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** HKDF-SHA-256 (extract + expand) */
+async function hkdfSha256(salt, ikm, info, length) {
+  const ikmKey = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, ['deriveBits']);
+  return new Uint8Array(await crypto.subtle.deriveBits(
+    { name: 'HKDF', hash: 'SHA-256', salt, info }, ikmKey, length * 8
+  ));
+}
+
+/** VAPID JWT (ES256) */
+async function vapidJwt(endpoint, subject, privB64u, pubB64u) {
+  const priv = b64uDec(privB64u); // 32-byte raw P-256 scalar
+  const pub  = b64uDec(pubB64u);  // 65-byte uncompressed P-256 point
+  const sigKey = await crypto.subtle.importKey('jwk', {
+    kty: 'EC', crv: 'P-256',
+    d: b64uEnc(priv),
+    x: b64uEnc(pub.slice(1, 33)),
+    y: b64uEnc(pub.slice(33, 65)),
+    ext: true,
+  }, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+
+  const origin  = new URL(endpoint).origin;
+  const header  = b64u(JSON.stringify({ typ: 'JWT', alg: 'ES256' }));
+  const payload = b64u(JSON.stringify({ aud: origin, exp: Math.floor(Date.now() / 1000) + 43200, sub: subject }));
+  const data    = `${header}.${payload}`;
+  const sig     = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, sigKey, enc(data));
+  return `${data}.${b64uEnc(new Uint8Array(sig))}`;
+}
+
+/** RFC 8291 (aes128gcm) 暗号化 */
+async function webPushEncrypt(payloadObj, p256dhB64u, authB64u) {
+  const plaintext  = enc(JSON.stringify(payloadObj));
+  const clientPub  = b64uDec(p256dhB64u); // 65 bytes
+  const authSecret = b64uDec(authB64u);   // 16 bytes
+
+  // サーバー側エフェメラル鍵ペア
+  const serverKP  = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+  const serverPub = new Uint8Array(await crypto.subtle.exportKey('raw', serverKP.publicKey));
+
+  // ECDH 共有シークレット
+  const clientKey = await crypto.subtle.importKey('raw', clientPub, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+  const sharedSecret = new Uint8Array(await crypto.subtle.deriveBits({ name: 'ECDH', public: clientKey }, serverKP.privateKey, 256));
+
+  // ランダムソルト (16 bytes)
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+
+  // IKM = HKDF(auth, sharedSecret, "WebPush: info\0" || clientPub || serverPub, 32)
+  const label  = enc('WebPush: info');
+  const keyInfo = new Uint8Array(label.length + 1 + clientPub.length + serverPub.length);
+  keyInfo.set(label); keyInfo[label.length] = 0;
+  keyInfo.set(clientPub, label.length + 1);
+  keyInfo.set(serverPub, label.length + 1 + clientPub.length);
+  const ikm = await hkdfSha256(authSecret, sharedSecret, keyInfo, 32);
+
+  // CEK (16 bytes) & Nonce (12 bytes)
+  const cekLabel   = enc('Content-Encoding: aes128gcm');
+  const cekInfo    = new Uint8Array(cekLabel.length + 1);
+  cekInfo.set(cekLabel); cekInfo[cekLabel.length] = 0;
+  const cek = await hkdfSha256(salt, ikm, cekInfo, 16);
+
+  const nonceLabel = enc('Content-Encoding: nonce');
+  const nonceInfo  = new Uint8Array(nonceLabel.length + 1);
+  nonceInfo.set(nonceLabel); nonceInfo[nonceLabel.length] = 0;
+  const nonce = await hkdfSha256(salt, ikm, nonceInfo, 12);
+
+  // AES-128-GCM 暗号化（末尾に 0x02 パディング区切り）
+  const padded  = new Uint8Array(plaintext.length + 1);
+  padded.set(plaintext); padded[plaintext.length] = 2;
+  const aesKey  = await crypto.subtle.importKey('raw', cek, { name: 'AES-GCM' }, false, ['encrypt']);
+  const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, aesKey, padded));
+
+  // RFC 8291 ヘッダー: salt(16) + rs(4BE) + keyid_len(1) + keyid(serverPub)
+  const rs = 4096;
+  const header = new Uint8Array(16 + 4 + 1 + serverPub.length);
+  header.set(salt, 0);
+  new DataView(header.buffer).setUint32(16, rs, false);
+  header[20] = serverPub.length;
+  header.set(serverPub, 21);
+
+  const body = new Uint8Array(header.length + ciphertext.length);
+  body.set(header); body.set(ciphertext, header.length);
+  return body;
+}
+
+/** 単一のプッシュ購読に送信 */
+async function sendWebPush(sub, payloadObj, env) {
+  if (!env.VAPID_PRIVATE_KEY || !env.VAPID_PUBLIC_KEY) return { skipped: true };
+  const body    = await webPushEncrypt(payloadObj, sub.p256dh, sub.auth);
+  const subject = env.VAPID_SUBJECT || 'mailto:admin@174care.com';
+  const jwt     = await vapidJwt(sub.endpoint, subject, env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY);
+
+  const res = await fetch(sub.endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type':     'application/octet-stream',
+      'Content-Encoding': 'aes128gcm',
+      'Authorization':    `vapid t=${jwt},k=${env.VAPID_PUBLIC_KEY}`,
+      'TTL': '86400',
+      'Urgency': 'normal',
+    },
+    body,
+  });
+  if (res.status === 410 || res.status === 404) return { expired: true };
+  if (!res.ok) { const t = await res.text().catch(() => ''); console.error(`push ${res.status}: ${t}`); return { error: true }; }
+  return { ok: true };
+}
+
+/** ユーザーの全購読に送信（期限切れは自動削除） */
+async function pushToUser(uid, payloadObj, env) {
+  const { results: subs } = await env.DB.prepare('SELECT * FROM push_subscriptions WHERE user_id = ?').bind(uid).all();
+  for (const sub of subs) {
+    const r = await sendWebPush(sub, payloadObj, env).catch(() => ({ error: true }));
+    if (r.expired) {
+      await env.DB.prepare('DELETE FROM push_subscriptions WHERE id = ?').bind(sub.id).run().catch(() => {});
+    }
+  }
+}
+
+/* ---------- Push サブスクリプション API ---------- */
+
+async function subscribePush(req, env) {
+  const uid = await auth(req, env);
+  const { endpoint, p256dh, auth: authKey } = await req.json();
+  if (!endpoint || !p256dh || !authKey) return err('endpoint, p256dh, auth は必須です');
+  const id = crypto.randomUUID();
+  await env.DB.prepare(`
+    INSERT INTO push_subscriptions (id, user_id, endpoint, p256dh, auth, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(endpoint) DO UPDATE SET user_id=excluded.user_id, p256dh=excluded.p256dh, auth=excluded.auth
+  `).bind(id, uid, endpoint, p256dh, authKey, new Date().toISOString()).run();
+  return json({ ok: true });
+}
+
+async function unsubscribePush(req, env) {
+  const uid = await auth(req, env);
+  const body = await req.json().catch(() => ({}));
+  if (body.endpoint) {
+    await env.DB.prepare('DELETE FROM push_subscriptions WHERE user_id = ? AND endpoint = ?').bind(uid, body.endpoint).run();
+  } else {
+    await env.DB.prepare('DELETE FROM push_subscriptions WHERE user_id = ?').bind(uid).run();
+  }
+  return json({ ok: true });
+}
+
+async function getVapidPublicKey(req, env) {
+  if (!env.VAPID_PUBLIC_KEY) return err('VAPID keys not configured', 503);
+  const cors = getCors(req);
+  return new Response(JSON.stringify({ publicKey: env.VAPID_PUBLIC_KEY }), { headers: { ...cors } });
+}
+
+/* ---------- Cron: スケジュール通知 ---------- */
+
+async function sendWeeklySummaryPush(env) {
+  const { results } = await env.DB.prepare(
+    "SELECT user_id FROM settings WHERE json_extract(data, '$.weekly') = 1 OR json_extract(data, '$.weekly') = true"
+  ).all();
+  for (const row of results) {
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const { results: records } = await env.DB.prepare(
+      'SELECT id FROM records WHERE user_id = ? AND timestamp >= ?'
+    ).bind(row.user_id, weekAgo).all();
+    await pushToUser(row.user_id, {
+      title: '174° 週次サマリー',
+      body:  `先週の頭痛回数: ${records.length}回。アプリで詳細を確認しましょう。`,
+      url:   '/analysis.html',
+    }, env);
+  }
+}
+
+async function sendDailyReminderPush(env) {
+  const { results } = await env.DB.prepare(
+    "SELECT user_id FROM settings WHERE json_extract(data, '$.notif_daily') = 1 OR json_extract(data, '$.notif_daily') = true"
+  ).all();
+  for (const row of results) {
+    const todayStart = new Date();
+    todayStart.setUTCHours(0, 0, 0, 0);
+    const rec = await env.DB.prepare(
+      'SELECT id FROM records WHERE user_id = ? AND timestamp >= ? LIMIT 1'
+    ).bind(row.user_id, todayStart.toISOString()).first();
+    if (!rec) {
+      await pushToUser(row.user_id, {
+        title: '174° 記録リマインダー',
+        body:  '今日の頭痛記録はできていますか？毎日の記録がパターン発見に役立ちます。',
+        url:   '/record.html',
+      }, env);
+    }
+  }
+}
+
 /* ---------- アカウント削除 ---------- */
 
 async function deleteAccount(req, env) {
@@ -519,6 +723,10 @@ export default {
       if (pathname === '/api/stripe/activate-session' && m === 'POST') return withCors(await activateSession(request, env));
       if (pathname === '/api/stripe/webhook'          && m === 'POST') return stripeWebhook(request, env); // Webhookはそのまま
 
+      if (pathname === '/api/push/vapid-key'   && m === 'GET')  return withCors(await getVapidPublicKey(request, env));
+      if (pathname === '/api/push/subscribe'   && m === 'POST') return withCors(await subscribePush(request, env));
+      if (pathname === '/api/push/unsubscribe' && m === 'POST') return withCors(await unsubscribePush(request, env));
+
       const del = pathname.match(/^\/api\/records\/([^/]+)$/);
       if (del && m === 'DELETE') return withCors(await deleteRecord(request, env, del[1]));
 
@@ -527,5 +735,21 @@ export default {
       const status = e.message.includes('認証') || e.message.includes('トークン') ? 401 : 500;
       return withCors(err(e.message, status));
     }
+  },
+
+  // Cloudflare Cron Trigger
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil((async () => {
+      const now = new Date();
+      const jstHour = (now.getUTCHours() + 9) % 24;
+      // 週次サマリー: 月曜 UTC 0:00 (= JST 9:00)
+      if (now.getUTCDay() === 1 && now.getUTCHours() === 0) {
+        await sendWeeklySummaryPush(env).catch(e => console.error('weekly push error:', e));
+      }
+      // 毎日リマインダー: UTC 12:00 (= JST 21:00)
+      if (now.getUTCHours() === 12) {
+        await sendDailyReminderPush(env).catch(e => console.error('daily push error:', e));
+      }
+    })());
   },
 };

@@ -77,6 +77,8 @@ self.addEventListener('notificationclick', e => {
 /* フェッチ: HTML/JS/CSSはネットワーク優先（常に最新を取得）、画像のみキャッシュ優先 */
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // chrome-extension など http(s)以外は無視
+  if (!e.request.url.startsWith('http')) return;
   const url = e.request.url;
   // 外部API・フォントはネットワーク優先
   if (url.includes('open-meteo.com') || url.includes('googleapis.com') || url.includes('jsdelivr.net')) {

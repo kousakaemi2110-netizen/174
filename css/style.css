@@ -32,6 +32,7 @@
   :root {
     --color-bg: #1A1820;
     --color-surface: #241F2E;
+    --color-primary-light: #2D2640;
     --color-text: #EDE9F8;
     --color-border: #3A3450;
     --color-text-muted: #9A96A8;
@@ -43,6 +44,7 @@
 :root[data-theme="dark"] {
   --color-bg: #1A1820;
   --color-surface: #241F2E;
+  --color-primary-light: #2D2640;
   --color-text: #EDE9F8;
   --color-border: #3A3450;
   --color-text-muted: #9A96A8;
@@ -480,7 +482,7 @@ h1, h2, h3 {
    AIカード
    ============================== */
 .ai-card {
-  background: linear-gradient(135deg, var(--color-primary-light) 0%, #F8F4FF 100%);
+  background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-surface) 100%);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: 18px 20px;

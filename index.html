@@ -243,20 +243,38 @@
         今日の頭痛を記録する
       </a>
 
-      <!-- クイックリンク -->
-      <div class="quick-links">
-        <a href="care.html" class="quick-link">
-          <span class="ql-icon">💆</span>ケア
-        </a>
-        <a href="column.html" class="quick-link">
-          <span class="ql-icon">📖</span>コラム
-        </a>
-      </div>
-
       <!-- ⑤ AIアドバイスカード -->
       <div class="ai-card">
         <div class="ai-label">AI アドバイス</div>
         <div class="ai-text" id="ai-advice">分析中…</div>
+      </div>
+
+      <!-- ⑥ ケア・コラムバナー -->
+      <div style="display:flex;gap:10px;margin-bottom:12px;">
+        <a href="care.html" style="
+          flex:1;display:flex;flex-direction:column;gap:6px;
+          background:var(--color-surface);border-radius:var(--radius);
+          padding:16px;box-shadow:var(--shadow-card);text-decoration:none;
+          color:var(--color-text);border:1px solid var(--color-border);
+          transition:transform 0.12s;-webkit-tap-highlight-color:transparent;
+        " onpointerdown="this.style.transform='scale(0.97)'" onpointerup="this.style.transform=''" onpointerleave="this.style.transform=''">
+          <span style="font-size:1.6rem;">💆</span>
+          <div style="font-size:0.9rem;font-weight:700;">ケアガイド</div>
+          <div style="font-size:0.75rem;color:var(--color-text-muted);line-height:1.5;">今の頭痛に合った<br>ケアを見つける</div>
+          <span style="font-size:0.75rem;color:var(--color-primary);font-weight:600;margin-top:2px;">見てみる →</span>
+        </a>
+        <a href="column.html" style="
+          flex:1;display:flex;flex-direction:column;gap:6px;
+          background:var(--color-surface);border-radius:var(--radius);
+          padding:16px;box-shadow:var(--shadow-card);text-decoration:none;
+          color:var(--color-text);border:1px solid var(--color-border);
+          transition:transform 0.12s;-webkit-tap-highlight-color:transparent;
+        " onpointerdown="this.style.transform='scale(0.97)'" onpointerup="this.style.transform=''" onpointerleave="this.style.transform=''">
+          <span style="font-size:1.6rem;">📖</span>
+          <div style="font-size:0.9rem;font-weight:700;">コラム</div>
+          <div style="font-size:0.75rem;color:var(--color-text-muted);line-height:1.5;">頭痛のことを<br>もっと知ろう</div>
+          <span style="font-size:0.75rem;color:var(--color-primary);font-weight:600;margin-top:2px;">読んでみる →</span>
+        </a>
       </div>
 
     </div>

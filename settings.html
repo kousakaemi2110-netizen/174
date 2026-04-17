@@ -1154,9 +1154,14 @@
       `;
       const el = document.getElementById('print-report');
       el.style.display = 'block';
+      const origTitle = document.title;
+      document.title = '頭痛レポート';
       setTimeout(() => {
         window.print();
-        setTimeout(() => { el.style.display = 'none'; }, 500);
+        setTimeout(() => {
+          el.style.display = 'none';
+          document.title = origTitle;
+        }, 500);
       }, 300);
     }
   </script>

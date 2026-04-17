@@ -601,7 +601,6 @@ APP.syncToCloud = async function() {
    DOMContentLoaded 共通処理
    ============================== */
 document.addEventListener('DOMContentLoaded', () => {
-  APP.initMockData();
   APP.setActiveNav();
   APP.checkScheduledNotifications();
 

@@ -573,6 +573,71 @@ APP.logout = function() {
   this.setToken(null);
 };
 
+/* ==============================
+   ヘッダー ユーザーボタン
+   ============================== */
+APP.initHeaderUserBtn = function() {
+  const btn = document.getElementById('header-user-btn');
+  if (!btn) return;
+
+  if (this.isLoggedIn()) {
+    const s = this.getSettings();
+    const nickname = s.nickname || '';
+    const initial = nickname ? nickname.charAt(0) : '？';
+    btn.innerHTML = `<span style="font-size:0.85rem;font-weight:700;line-height:1">${initial}</span>`;
+    btn.style.background = 'var(--color-primary)';
+    btn.style.color = '#fff';
+    btn.setAttribute('aria-label', 'アカウントメニュー');
+    btn.onclick = (e) => { e.stopPropagation(); APP._toggleUserMenu(); };
+  } else {
+    btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.setAttribute('aria-label', 'ログイン');
+    btn.onclick = () => { location.href = 'settings.html'; };
+  }
+};
+
+APP._toggleUserMenu = function() {
+  const existing = document.getElementById('header-user-menu');
+  if (existing) { existing.remove(); return; }
+
+  const btn = document.getElementById('header-user-btn');
+  const rect = btn.getBoundingClientRect();
+  const menu = document.createElement('div');
+  menu.id = 'header-user-menu';
+  menu.className = 'header-user-menu';
+  menu.style.top = (rect.bottom + 8) + 'px';
+  menu.style.right = (window.innerWidth - rect.right) + 'px';
+  menu.innerHTML = `
+    <button class="header-user-menu-item" onclick="APP._headerGoSettings()">設定を開く</button>
+    <button class="header-user-menu-item header-user-menu-logout" onclick="APP._headerLogout()">ログアウト</button>
+  `;
+  document.body.appendChild(menu);
+
+  setTimeout(() => {
+    document.addEventListener('click', function _close() {
+      document.getElementById('header-user-menu')?.remove();
+      document.removeEventListener('click', _close);
+    });
+  }, 0);
+};
+
+APP._headerGoSettings = function() {
+  document.getElementById('header-user-menu')?.remove();
+  location.href = 'settings.html';
+};
+
+APP._headerLogout = function() {
+  document.getElementById('header-user-menu')?.remove();
+  if (confirm('ログアウトしますか？')) {
+    APP.logout();
+    location.reload();
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => APP.initHeaderUserBtn());
+
 APP.syncToCloud = async function() {
   const records  = this.getRecords();
   const settings = this.getSettings();

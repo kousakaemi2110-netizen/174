@@ -251,6 +251,7 @@
     <a href="index.html" class="logo">174°</a>
     <div class="header-actions">
       <button class="icon-btn" aria-label="通知">🔔</button>
+      <button class="icon-btn" id="header-user-btn" aria-label="ログイン"></button>
     </div>
   </header>
 
@@ -640,6 +641,8 @@
       if (APP.isLoggedIn()) {
         const btn = document.getElementById('btn-delete-account');
         if (btn) btn.style.display = '';
+        // ページ読込時にサーバーからpremium状態を取得
+        APP.syncToCloud().then(() => renderAccountSection()).catch(() => {});
       }
       // Web Push 対応チェック
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) {

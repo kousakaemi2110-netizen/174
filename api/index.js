@@ -246,6 +246,11 @@ async function getSettings(req, env) {
 async function updateSettings(req, env) {
   const uid  = await auth(req, env);
   const data = await req.json();
+  const serverRow = await env.DB.prepare('SELECT data FROM settings WHERE user_id = ?').bind(uid).first();
+  const serverSettings = serverRow ? JSON.parse(serverRow.data) : {};
+  if (serverSettings.premium)              data.premium              = serverSettings.premium;
+  if (serverSettings.premiumSince)         data.premiumSince         = serverSettings.premiumSince;
+  if (serverSettings.stripeSubscriptionId) data.stripeSubscriptionId = serverSettings.stripeSubscriptionId;
   await env.DB.prepare(
     'INSERT OR REPLACE INTO settings (user_id, data, updated_at) VALUES (?, ?, ?)'
   ).bind(uid, JSON.stringify(data), new Date().toISOString()).run();

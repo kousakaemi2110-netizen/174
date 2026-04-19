@@ -170,6 +170,41 @@ h1, h2, h3 {
   background: var(--color-border);
 }
 
+/* ヘッダー ユーザーメニュー */
+.header-user-menu {
+  position: fixed;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  padding: 6px;
+  z-index: 300;
+  min-width: 148px;
+  animation: menuFadeIn 0.15s ease;
+}
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.header-user-menu-item {
+  display: block;
+  width: 100%;
+  padding: 11px 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 8px;
+  color: var(--color-text);
+  font-family: inherit;
+}
+.header-user-menu-item:active {
+  background: var(--color-primary-light);
+}
+.header-user-menu-logout {
+  color: #c0392b;
+}
+
 /* ==============================
    ボトムナビ
    ============================== */

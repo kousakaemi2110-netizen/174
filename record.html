@@ -329,6 +329,20 @@
       flex-direction: column;
       gap: 10px;
     }
+
+    /* 日時入力 */
+    .datetime-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px 0;
+    }
+    .datetime-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
@@ -352,6 +366,8 @@
       <div class="step-dot" id="dot-4"></div>
       <div class="step-line" id="line-4"></div>
       <div class="step-dot" id="dot-5"></div>
+      <div class="step-line" id="line-5"></div>
+      <div class="step-dot" id="dot-6"></div>
     </div>
 
     <!-- Step 1: 強度 -->
@@ -482,6 +498,22 @@
       </div>
     </div>
 
+    <!-- Step 6: 日時 -->
+    <div class="step-screen" id="step-6">
+      <div class="step-question">
+        いつの頭痛ですか？
+        <span class="optional-label">任意</span>
+      </div>
+      <div class="step-hint">過去の記録の場合は日時を変更してください</div>
+
+      <div class="datetime-fields">
+        <label class="datetime-label" for="record-date">日付</label>
+        <input class="form-input" type="date" id="record-date" aria-label="日付">
+        <label class="datetime-label" for="record-time">時刻</label>
+        <input class="form-input" type="time" id="record-time" aria-label="時刻">
+      </div>
+    </div>
+
     <!-- 完了画面 -->
     <div class="step-screen" id="step-complete">
       <div class="complete-circle" aria-hidden="true">✓</div>
@@ -532,7 +564,7 @@
        記録フォーム ロジック
        ============================== */
 
-    const TOTAL_STEPS = 5;
+    const TOTAL_STEPS = 6;
     let currentStep = 1;
 
     // 記録データ
@@ -671,12 +703,15 @@
         return;
       }
 
-      if (currentStep === TOTAL_STEPS) {
-        // 薬詳細の保存
+      // Step 5（薬）を離れるとき薬詳細を保存
+      if (currentStep === 5) {
         if (record.medication.taken) {
           record.medication.name = document.getElementById('med-name').value.trim();
           record.medication.count = medCount;
         }
+      }
+
+      if (currentStep === TOTAL_STEPS) {
         saveRecord();
         currentStep++;
         showStep(currentStep);
@@ -716,7 +751,11 @@
         return;
       }
       record.id = APP.uuid();
-      record.timestamp = new Date().toISOString();
+      const dateVal = document.getElementById('record-date').value;
+      const timeVal = document.getElementById('record-time').value;
+      record.timestamp = dateVal && timeVal
+        ? new Date(`${dateVal}T${timeVal}`).toISOString()
+        : new Date().toISOString();
       APP.addRecord({ ...record });
     }
 
@@ -744,6 +783,14 @@
       buildIntensityButtons();
       updateStepper();
       showStep(1);
+
+      // 日時フィールドを現在日時で初期化
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      document.getElementById('record-date').value =
+        `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+      document.getElementById('record-time').value =
+        `${pad(now.getHours())}:${pad(now.getMinutes())}`;
     });
   </script>
 </body>

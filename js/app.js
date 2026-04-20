@@ -173,11 +173,16 @@ APP.THEME_KEY = '174_theme';
 
 APP.toggleTheme = function() {
   const cur = localStorage.getItem(this.THEME_KEY);
-  const isDark = cur === 'dark'
-    || (!cur && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const next = isDark ? 'light' : 'dark';
-  localStorage.setItem(this.THEME_KEY, next);
-  document.documentElement.setAttribute('data-theme', next);
+  if (cur === null) {
+    localStorage.setItem(this.THEME_KEY, 'dark');
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else if (cur === 'dark') {
+    localStorage.setItem(this.THEME_KEY, 'light');
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    localStorage.removeItem(this.THEME_KEY);
+    document.documentElement.removeAttribute('data-theme');
+  }
   this._updateThemeBtn();
 };
 
@@ -185,10 +190,19 @@ APP._updateThemeBtn = function() {
   const btn = document.getElementById('_theme_btn');
   if (!btn) return;
   const cur = localStorage.getItem(this.THEME_KEY);
-  const isDark = cur === 'dark'
-    || (!cur && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  btn.textContent = isDark ? '☀️' : '🌙';
-  btn.setAttribute('aria-label', isDark ? 'ライトモードに切り替え' : 'ダークモードに切り替え');
+  if (cur === 'dark') {
+    btn.textContent = '☀️';
+    btn.setAttribute('aria-label', 'ライトモードに切り替え');
+    btn.title = 'ダーク固定（タップでライトへ）';
+  } else if (cur === 'light') {
+    btn.textContent = '🔄';
+    btn.setAttribute('aria-label', 'システム設定に合わせる');
+    btn.title = 'ライト固定（タップでシステム連動へ）';
+  } else {
+    btn.textContent = '🌙';
+    btn.setAttribute('aria-label', 'ダークモードに切り替え');
+    btn.title = 'システム連動（タップでダークへ）';
+  }
 };
 
 /* ==============================
@@ -586,13 +600,13 @@ APP.initHeaderUserBtn = function() {
     const initial = nickname ? nickname.charAt(0) : null;
     btn.innerHTML = initial
       ? `<span style="font-size:0.85rem;font-weight:700;line-height:1">${initial}</span>`
-      : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`;
+      : `<span style="font-size:1.1rem;line-height:1">👤</span>`;
     btn.style.background = 'var(--color-primary)';
     btn.style.color = '#fff';
     btn.setAttribute('aria-label', 'アカウントメニュー');
     btn.onclick = (e) => { e.stopPropagation(); APP._toggleUserMenu(); };
   } else {
-    btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
+    btn.innerHTML = '<span style="font-size:1.1rem;line-height:1">👤</span>';
     btn.style.background = '';
     btn.style.color = '';
     btn.setAttribute('aria-label', 'ログイン');
